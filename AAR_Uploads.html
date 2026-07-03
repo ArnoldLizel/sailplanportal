@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AAR - After Activity Reports</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #2a0a2e;
+      --bg2: #3a0d40;
+      --surface: rgba(255,255,255,0.07);
+      --surface2: rgba(255,255,255,0.12);
+      --accent: #f72585;
+      --accent2: #ffb347;
+      --accent-glow: rgba(247, 37, 133, 0.3);
+      --red: #f72585;
+      --cyan: #ffb347;
+      --text: #fff5ff;
+      --muted: rgba(255,220,255,0.55);
+      --border: rgba(247, 37, 133, 0.25);
+      --border-hover: rgba(247, 37, 133, 0.6);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 32px;
+      background: linear-gradient(135deg, #c0165a 0%, #8b1aad 40%, #4a1080 70%, #2a0a5e 100%);
+      background-attachment: fixed;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header-eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #ffb347;
+      margin-bottom: 12px;
+    }
+
+    .header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 36px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .header h1 span {
+      color: #f72585;
+    }
+
+    .header-sub {
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 1.5px dashed rgba(255,255,255,0.3);
+      border-radius: 16px;
+      padding: 36px 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+      border-color: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.14);
+    }
+
+    .upload-zone i {
+      font-size: 36px;
+      color: var(--accent2);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .upload-zone-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .upload-zone-hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    #file-input { display: none; }
+
+    /* Action Buttons */
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 40px;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 10px;
+      border: 1.5px solid transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f72585, #e0007a);
+      color: #fff;
+      border-color: transparent;
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(247,37,133,0.4);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: #ffb347;
+      border-color: rgba(255,179,71,0.4);
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: rgba(255,179,71,0.12);
+      border-color: #ffb347;
+    }
+
+    .btn-cyan {
+      background: transparent;
+      color: #fff;
+      border-color: rgba(255,255,255,0.3);
+    }
+    .btn-cyan:hover:not(:disabled) {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.6);
+    }
+
+    /* Month grid */
+    .months-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .months-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 500px) {
+      .months-grid { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; }
+    }
+
+    .month-card {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 18px;
+      transition: all 0.2s ease;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .month-card:hover {
+      border-color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.13);
+    }
+
+    .month-card.active {
+      border-color: rgba(255,179,71,0.5);
+      background: rgba(255,255,255,0.11);
+    }
+
+    .month-card.drag-target {
+      border-color: #ffb347;
+      background: rgba(255,179,71,0.1);
+    }
+
+    .month-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #ffb347;
+      margin-bottom: 10px;
+    }
+
+    .month-files {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .no-files {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      margin: auto 0;
+    }
+
+    .file-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11.5px;
+      color: #fff;
+      background: rgba(255,255,255,0.08);
+      border-radius: 7px;
+      padding: 5px 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      overflow: hidden;
+    }
+
+    .file-pill:hover {
+      background: rgba(247, 37, 133, 0.2);
+      border-color: rgba(247,37,133,0.5);
+    }
+
+    .file-pill i {
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .file-pill .pill-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pill-del {
+      opacity: 0;
+      color: #f72585;
+      font-size: 10px;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+    .file-pill:hover .pill-del { opacity: 1; }
+
+    .month-footer {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .view-link {
+      font-size: 11px;
+      color: rgba(255,220,255,0.6);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s;
+    }
+    .view-link:hover { color: #ffb347; }
+
+    .file-count-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(247, 37, 133, 0.5);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    /* Modal */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 7, 30, 0.85);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-bg.open { display: flex; }
+
+    .modal {
+      background: rgba(60,10,70,0.75);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 28px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+    .modal-close:hover { color: #fff; }
+
+    .modal-file-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .modal-file-item {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-file-item i { font-size: 22px; }
+    .modal-file-details { flex: 1; overflow: hidden; }
+    .modal-file-name { font-size: 13px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .modal-file-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .modal-file-actions { display: flex; gap: 6px; }
+
+    .icon-btn {
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: rgba(255,220,255,0.6);
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover { color: #fff; border-color: #ffb347; background: rgba(255,179,71,0.15); }
+    .icon-btn.del:hover { color: #f72585; border-color: #f72585; background: rgba(247,37,133,0.12); }
+
+    .modal-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(60,10,70,0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 13px;
+      opacity: 0;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      z-index: 200;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.success { border-color: rgba(255,179,71,0.5); color: #ffb347; }
+    .toast.info { border-color: rgba(255,255,255,0.3); color: #fff; }
+    .toast.error { border-color: rgba(247,37,133,0.5); color: #f72585; }
+
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-eyebrow">File Management System</div>
+    <h1><i class="fas fa-file-alt" style="font-size:28px; vertical-align: middle; margin-right:10px;"></i>After Activity <span>Reports</span></h1>
+    <p class="header-sub">Upload, manage, and organize your AAR files by month</p>
+  </div>
+
+  <div class="upload-zone" id="upload-zone">
+    <i class="fas fa-cloud-upload-alt"></i>
+    <div class="upload-zone-title">Click to upload or drag and drop</div>
+    <div class="upload-zone-hint">Supported: PDF, Excel, Word, Images &nbsp;·&nbsp; Files saved per month</div>
+    <input type="file" id="file-input" multiple accept=".pdf,.xlsx,.xls,.doc,.docx,.png,.jpg,.jpeg">
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="upload-btn">
+      <i class="fas fa-upload"></i> Upload Files
+    </button>
+    <button class="btn btn-danger" id="remove-btn" disabled>
+      <i class="fas fa-trash-alt"></i> Remove All
+    </button>
+    <button class="btn btn-cyan" id="download-btn" disabled>
+      <i class="fas fa-download"></i> Download All
+    </button>
+  </div>
+
+  <div class="months-grid" id="months-grid"></div>
+
+  <!-- Month Picker Modal -->
+  <div class="modal-bg" id="month-picker">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <div class="modal-title">Choose a Month</div>
+        <button class="modal-close" onclick="cancelPicker()"><i class="fas fa-times"></i></button>
+      </div>
+      <p style="font-size:13px;color:rgba(255,220,255,0.6);margin-bottom:18px;" id="picker-subtitle"></p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;" id="month-picker-grid"></div>
+    </div>
+  </div>
+
+  <!-- File View Modal -->
+  <div class="modal-bg" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title">Files</div>
+        <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const STORAGE_KEY = 'aar_files_v2';
+    let files = {};
+    let activeModal = null;
+    let pendingFiles = null; // holds FileList while user picks a month
+
+    function load() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) files = JSON.parse(saved);
+      } catch(e) {}
+    }
+
+    function save() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(files)); } catch(e) {}
+    }
+
+    function totalFiles() {
+      return Object.values(files).reduce((s, arr) => s + arr.length, 0);
+    }
+
+    function fileIcon(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      if (['pdf'].includes(ext)) return 'fas fa-file-pdf';
+      if (['xlsx','xls'].includes(ext)) return 'fas fa-file-excel';
+      if (['doc','docx'].includes(ext)) return 'fas fa-file-word';
+      if (['png','jpg','jpeg'].includes(ext)) return 'fas fa-file-image';
+      return 'fas fa-file';
+    }
+
+    function iconColor(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      if (ext === 'pdf') return '#f43f5e';
+      if (['xlsx','xls'].includes(ext)) return '#4ade80';
+      if (['doc','docx'].includes(ext)) return '#60a5fa';
+      if (['png','jpg','jpeg'].includes(ext)) return '#fb923c';
+      return '#a78bfa';
+    }
+
+    function fmtSize(b) {
+      if (!b) return '';
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+      return (b/1048576).toFixed(1) + ' MB';
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('months-grid');
+      grid.innerHTML = '';
+      const totalF = totalFiles();
+
+      MONTHS.forEach((month, i) => {
+        const monthFiles = files[i] || [];
+        const card = document.createElement('div');
+        card.className = 'month-card' + (monthFiles.length ? ' active' : '');
+        card.dataset.month = i;
+
+        const previewFiles = monthFiles.slice(0, 3);
+        const extra = monthFiles.length - 3;
+
+        card.innerHTML = `
+          <div class="month-name">${month}</div>
+          <div class="month-files">
+            ${monthFiles.length === 0
+              ? '<div class="no-files">No files</div>'
+              : previewFiles.map(f => `
+                <div class="file-pill">
+                  <i class="${fileIcon(f.name)}" style="color:${iconColor(f.name)}"></i>
+                  <span class="pill-name">${f.name}</span>
+                </div>`).join('')
+              + (extra > 0 ? `<div style="font-size:11px;color:var(--muted);padding:2px 8px;">+${extra} more</div>` : '')}
+          </div>
+          <div class="month-footer">
+            <span class="view-link" onclick="openModal(${i})">
+              <i class="fas fa-folder-open"></i> View / Manage Files
+            </span>
+            ${monthFiles.length > 0 ? `<span class="file-count-badge">${monthFiles.length} file${monthFiles.length > 1 ? 's' : ''}</span>` : ''}
+          </div>
+        `;
+
+        card.addEventListener('dragover', (e) => { e.preventDefault(); card.classList.add('drag-target'); });
+        card.addEventListener('dragleave', () => card.classList.remove('drag-target'));
+        card.addEventListener('drop', (e) => {
+          e.preventDefault();
+          card.classList.remove('drag-target');
+          // Dragging directly onto a month card still asks which month (or you can skip picker here)
+          openMonthPicker(e.dataTransfer.files);
+        });
+
+        grid.appendChild(card);
+      });
+
+      const removeBtn = document.getElementById('remove-btn');
+      const downloadBtn = document.getElementById('download-btn');
+      removeBtn.disabled = totalF === 0;
+      downloadBtn.disabled = totalF === 0;
+    }
+
+    // --- Month Picker ---
+    function openMonthPicker(fileList) {
+      pendingFiles = fileList;
+      const count = fileList.length;
+      document.getElementById('picker-subtitle').textContent =
+        `You selected ${count} file${count > 1 ? 's' : ''}. Which month should ${count > 1 ? 'they' : 'it'} be saved to?`;
+
+      const grid = document.getElementById('month-picker-grid');
+      grid.innerHTML = '';
+      MONTHS.forEach((m, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        const count = (files[i] || []).length;
+        btn.style.cssText = `
+          flex-direction: column; gap: 4px; padding: 14px 10px;
+          background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+          border-radius: 10px; color: #fff; font-family: inherit; cursor: pointer;
+          transition: all 0.15s; font-size: 13px; font-weight: 600;
+        `;
+        btn.innerHTML = `
+          <span style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#ffb347;letter-spacing:0.05em;">${m}</span>
+          <span style="font-size:10px;color:rgba(255,220,255,0.5);">${count} file${count !== 1 ? 's' : ''}</span>
+        `;
+        btn.addEventListener('mouseenter', () => {
+          btn.style.background = 'rgba(247,37,133,0.2)';
+          btn.style.borderColor = 'rgba(247,37,133,0.6)';
+        });
+        btn.addEventListener('mouseleave', () => {
+          btn.style.background = 'rgba(255,255,255,0.07)';
+          btn.style.borderColor = 'rgba(255,255,255,0.15)';
+        });
+        btn.addEventListener('click', () => confirmMonthPick(i));
+        grid.appendChild(btn);
+      });
+
+      document.getElementById('month-picker').classList.add('open');
+    }
+
+    function confirmMonthPick(monthIndex) {
+      document.getElementById('month-picker').classList.remove('open');
+      if (!pendingFiles) return;
+      handleFiles(pendingFiles, monthIndex);
+      pendingFiles = null;
+    }
+
+    function cancelPicker() {
+      document.getElementById('month-picker').classList.remove('open');
+      pendingFiles = null;
+      document.getElementById('file-input').value = '';
+    }
+
+    function handleFiles(fileList, monthIndex) {
+      if (!files[monthIndex]) files[monthIndex] = [];
+      let count = 0;
+      const total = fileList.length;
+      Array.from(fileList).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          files[monthIndex].push({
+            name: file.name,
+            size: fmtSize(file.size),
+            type: file.type,
+            data: e.target.result,
+            date: new Date().toLocaleString()
+          });
+          count++;
+          save();
+          renderGrid();
+          if (count === total) {
+            showToast(`${count} file(s) added to ${MONTHS[monthIndex]}`, 'success');
+            if (activeModal === monthIndex) renderModal(monthIndex);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+      document.getElementById('file-input').value = '';
+    }
+
+    function openModal(monthIndex) {
+      activeModal = monthIndex;
+      renderModal(monthIndex);
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function renderModal(monthIndex) {
+      document.getElementById('modal-title').textContent = MONTHS[monthIndex] + ' Files';
+      const body = document.getElementById('modal-body');
+      const monthFiles = files[monthIndex] || [];
+
+      if (monthFiles.length === 0) {
+        body.innerHTML = `<div class="modal-empty"><i class="fas fa-folder-open" style="font-size:36px;display:block;margin-bottom:12px;"></i>No files uploaded for ${MONTHS[monthIndex]} yet.</div>`;
+        return;
+      }
+
+      body.innerHTML = `<div class="modal-file-list">
+        ${monthFiles.map((f, idx) => `
+          <div class="modal-file-item">
+            <i class="${fileIcon(f.name)}" style="color:${iconColor(f.name)};font-size:24px;"></i>
+            <div class="modal-file-details">
+              <div class="modal-file-name">${f.name}</div>
+              <div class="modal-file-meta">${f.size} &nbsp;·&nbsp; ${f.date}</div>
+            </div>
+            <div class="modal-file-actions">
+              <button class="icon-btn" title="Download" onclick="downloadFile(${monthIndex}, ${idx})"><i class="fas fa-download"></i></button>
+              <button class="icon-btn del" title="Remove" onclick="removeFile(${monthIndex}, ${idx})"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('open');
+      activeModal = null;
+    }
+
+    function downloadFile(mi, idx) {
+      const f = files[mi][idx];
+      const a = document.createElement('a');
+      a.href = f.data; a.download = f.name; a.click();
+      showToast('Downloading ' + f.name, 'info');
+    }
+
+    function removeFile(mi, idx) {
+      const name = files[mi][idx].name;
+      files[mi].splice(idx, 1);
+      if (files[mi].length === 0) delete files[mi];
+      save(); renderGrid(); renderModal(mi);
+      showToast(name + ' removed', 'info');
+    }
+
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + (type || '');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    const zone = document.getElementById('upload-zone');
+    const input = document.getElementById('file-input');
+    zone.addEventListener('click', () => input.click());
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); openMonthPicker(e.dataTransfer.files); });
+    input.addEventListener('change', e => { if (e.target.files.length) openMonthPicker(e.target.files); });
+    document.getElementById('upload-btn').addEventListener('click', () => input.click());
+
+    document.getElementById('remove-btn').addEventListener('click', () => {
+      if (confirm('Remove all files from all months?')) {
+        files = {}; save(); renderGrid();
+        showToast('All files removed', 'error');
+      }
+    });
+
+    document.getElementById('download-btn').addEventListener('click', () => {
+      let count = 0;
+      Object.values(files).forEach(arr => arr.forEach(f => {
+        const a = document.createElement('a');
+        a.href = f.data; a.download = f.name; a.click();
+        count++;
+      }));
+      showToast(`Downloading ${count} file(s)`, 'success');
+    });
+
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    document.getElementById('month-picker').addEventListener('click', function(e) {
+      if (e.target === this) cancelPicker();
+    });
+
+    load();
+    renderGrid();
+  </script>
+</body>
+</html>

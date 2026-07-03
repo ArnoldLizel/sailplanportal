@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Personnel Performance Form</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Nunito:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: rgba(232,24,109,0.35); border-radius: 4px; }
+
+    :root {
+      --pink:        #e8186d;
+      --pink-light:  #f5527a;
+      --magenta:     #c2185b;
+      --purple:      #7b2d8b;
+      --purple-deep: #4a1060;
+      --purple-dark: #2e0845;
+      --gold:        #f5c842;
+      --gold2:       #ffd740;
+      --teal:        #80cbc4;
+      --text:        rgba(255,255,255,0.93);
+      --text-sub:    rgba(255,255,255,0.60);
+      --text-muted:  rgba(255,255,255,0.38);
+      --card-bg:     rgba(255,255,255,0.08);
+      --card-border: rgba(255,255,255,0.14);
+      --input-bg:    rgba(255,255,255,0.09);
+      --input-border:rgba(255,255,255,0.18);
+      --shadow:      0 8px 32px rgba(0,0,0,0.30), 0 2px 8px rgba(0,0,0,0.20);
+      --radius-lg:   18px;
+      --radius-md:   12px;
+      --radius-sm:   8px;
+      --sidebar-w:   330px;
+      --font-bc:     'Barlow Condensed', sans-serif;
+      --font-main:   'Nunito', sans-serif;
+      --font-body:   'Inter', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-body);
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse 60% 70% at 0% 50%,  rgba(232,24,109,0.55) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 100% 50%, rgba(74,16,96,0.80)  0%, transparent 65%),
+        radial-gradient(ellipse 80% 80% at 50% 50%,  #8b1a6b 0%, #5a1278 45%, #2e0845 100%);
+      font-size: 16px;
+    }
+    body::after {
+      content:''; position:fixed; inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity:0.032; pointer-events:none; z-index:0;
+    }
+
+    .app-shell { display:flex; min-height:100vh; align-items:stretch; position:relative; z-index:1; }
+
+    /* ══════════════ SIDEBAR ══════════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: rgba(46,8,69,0.65);
+      backdrop-filter: blur(26px) saturate(1.8);
+      -webkit-backdrop-filter: blur(26px) saturate(1.8);
+      border-right: 1.5px solid rgba(255,255,255,0.12);
+      box-shadow: 4px 0 30px rgba(0,0,0,0.28);
+      display: flex; flex-direction: column;
+      position: sticky; top: 0; height: 100vh; overflow: hidden;
+    }
+    .sidebar-brand {
+      background: linear-gradient(135deg, var(--purple-dark) 0%, var(--pink) 100%);
+      padding: 26px 20px 20px;
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+    }
+    .brand-icon { width:44px; height:44px; background:rgba(255,255,255,0.16); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; border:1px solid rgba(255,255,255,0.20); }
+    .brand-text { font-family:var(--font-main); font-weight:900; font-size:18px; color:#fff; line-height:1.3; }
+    .brand-sub  { font-size:12px; color:rgba(255,255,255,0.55); font-weight:600; letter-spacing:0.5px; }
+
+    .sidebar-body { flex:1; overflow-y:auto; padding:16px 16px 16px; display:flex; flex-direction:column; gap:12px; }
+    .sb-label { font-family:var(--font-main); font-weight:800; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold); opacity:0.80; padding:0 2px; }
+
+    .supa-status-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: rgba(255,255,255,0.20); flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .supa-status-dot.connected   { background: #66bb6a; box-shadow: 0 0 6px rgba(102,187,106,0.7); }
+    .supa-status-dot.error       { background: #ef5350; box-shadow: 0 0 6px rgba(239,83,80,0.7); }
+    .supa-status-dot.connecting  { background: var(--gold); box-shadow: 0 0 6px rgba(245,200,66,0.7); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .upload-zone {
+      border:2px dashed rgba(232,24,109,0.45); border-radius:var(--radius-md);
+      background:rgba(232,24,109,0.08); padding:16px 12px; text-align:center;
+      cursor:pointer; transition:border-color 0.2s,background 0.2s; position:relative;
+    }
+    .upload-zone:hover,.upload-zone.drag-over { border-color:var(--pink-light); background:rgba(232,24,109,0.16); }
+    .upload-zone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .upload-icon  { font-size:28px; margin-bottom:5px; }
+    .upload-label { font-family:var(--font-main); font-size:15px; font-weight:700; color:var(--text); display:block; margin-bottom:3px; }
+    .upload-hint  { font-size:12px; color:var(--text-muted); }
+
+    .encode-area { background:var(--card-bg); border-radius:var(--radius-md); border:1.5px solid var(--card-border); box-shadow:var(--shadow); padding:12px 13px; display:flex; flex-direction:column; gap:8px; }
+    .encode-title { font-family:var(--font-main); font-weight:800; font-size:15px; color:var(--text); }
+    .encode-row { display:flex; gap:7px; }
+    .encode-row input { flex:1; border:1.5px solid var(--input-border); border-radius:var(--radius-sm); background:var(--input-bg); font-family:var(--font-body); font-size:14px; color:var(--text); padding:9px 11px; outline:none; transition:border-color 0.2s,box-shadow 0.2s; }
+    .encode-row input:focus { border-color:var(--pink-light); box-shadow:0 0 0 3px rgba(232,24,109,0.20); }
+    .encode-row input::placeholder { color:var(--text-muted); }
+    .btn-add { background:linear-gradient(135deg,var(--pink),var(--pink-light)); color:#fff; border:none; border-radius:var(--radius-sm); width:40px; height:40px; font-family:var(--font-main); font-weight:900; font-size:24px; cursor:pointer; box-shadow:0 4px 14px rgba(232,24,109,0.45); transition:transform 0.15s,box-shadow 0.15s; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .btn-add:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(232,24,109,0.60); }
+
+    .personnel-list { display:flex; flex-direction:column; gap:6px; max-height:240px; overflow-y:auto; }
+    .personnel-item { display:flex; align-items:center; gap:10px; background:var(--card-bg); border:1.5px solid var(--card-border); border-radius:var(--radius-sm); padding:9px 11px; box-shadow:0 2px 8px rgba(0,0,0,0.20); cursor:pointer; transition:background 0.15s,transform 0.15s; animation:slideIn 0.22s ease; position:relative; }
+    @keyframes slideIn { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
+    .personnel-item:hover  { background:rgba(232,24,109,0.14); transform:translateX(2px); }
+    .personnel-item.active { background:rgba(232,24,109,0.22); border-color:rgba(232,24,109,0.50); }
+    .avatar { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--pink),var(--gold)); display:flex; align-items:center; justify-content:center; font-family:var(--font-main); font-size:13px; font-weight:900; color:#fff; flex-shrink:0; }
+    .p-info { flex:1; min-width:0; }
+    .p-name  { font-family:var(--font-main); font-weight:700; font-size:14px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .p-desig { font-size:12px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .btn-del { background:none; border:none; color:rgba(255,255,255,0.25); cursor:pointer; font-size:15px; padding:3px 5px; border-radius:5px; transition:color 0.15s,background 0.15s; flex-shrink:0; }
+    .btn-del:hover { color:var(--gold); background:rgba(245,200,66,0.14); }
+    .empty-state { text-align:center; padding:22px 12px; color:var(--text-muted); font-size:13px; }
+    .empty-icon  { font-size:30px; margin-bottom:6px; }
+
+    .has-data-dot { width:9px; height:9px; border-radius:50%; background:#80cbc4; flex-shrink:0; box-shadow:0 0 5px rgba(128,203,196,0.7); }
+
+    .btn-load { background:linear-gradient(135deg,var(--purple-dark),var(--pink)); color:#fff; border:none; border-radius:var(--radius-md); padding:12px; font-family:var(--font-main); font-weight:800; font-size:14px; cursor:pointer; letter-spacing:0.4px; box-shadow:0 4px 18px rgba(232,24,109,0.38); transition:opacity 0.15s,transform 0.15s; display:flex; align-items:center; justify-content:center; gap:7px; border:1px solid rgba(255,255,255,0.13); }
+    .btn-load:hover { opacity:0.92; transform:translateY(-1px); }
+
+    .auto-load-hint { font-size:12px; color:rgba(128,203,196,0.75); text-align:center; font-family:var(--font-main); font-weight:600; letter-spacing:0.3px; }
+
+    .sidebar-footer { border-top:1.5px solid rgba(255,255,255,0.08); padding:13px 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .footer-label { font-size:13px; color:var(--text-muted); font-family:var(--font-main); font-weight:600; }
+    .count-badge  { background:linear-gradient(135deg,var(--pink),var(--gold)); color:#fff; border-radius:20px; padding:4px 12px; font-family:var(--font-main); font-size:13px; font-weight:800; }
+
+    /* ══════════════ MAIN CONTENT ══════════════ */
+    .main-content { flex:1; min-width:0; padding:28px 26px 70px; display:flex; flex-direction:column; gap:28px; overflow-y:auto; }
+
+    .page-title { font-family:var(--font-main); font-weight:900; font-size:30px; color:var(--text); }
+    .page-title span { color:var(--gold); }
+    .page-sub   { font-size:15px; color:var(--text-muted); margin-top:4px; font-weight:500; }
+
+    .active-personnel-banner { display:none; background:rgba(128,203,196,0.12); border:1px solid rgba(128,203,196,0.30); border-radius:var(--radius-md); padding:12px 18px; font-family:var(--font-main); font-size:15px; font-weight:700; color:#80cbc4; align-items:center; gap:12px; }
+    .active-personnel-banner.show { display:flex; }
+    .active-personnel-banner .apb-name { color:#fff; font-size:18px; }
+    .active-personnel-banner .apb-dot  { width:10px; height:10px; border-radius:50%; background:#80cbc4; box-shadow:0 0 6px rgba(128,203,196,0.8); flex-shrink:0; }
+
+    /* ══════════════ BSC CARD ══════════════ */
+    .bsc-card { background:rgba(10,4,30,0.90); border:1px solid rgba(255,255,255,0.10); border-radius:var(--radius-lg); overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,255,255,0.07); }
+
+    .bsc-header { background:linear-gradient(135deg,rgba(20,6,50,0.98),rgba(46,8,69,0.98)); border-bottom:2px solid rgba(245,200,66,0.30); padding:20px 26px; display:flex; align-items:center; gap:14px; }
+    .bsc-header-title { font-family:var(--font-bc); font-size:2.1rem; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#fff; line-height:1.1; }
+    .bsc-header-year  { font-family:var(--font-bc); font-size:1.1rem; font-weight:700; letter-spacing:0.15em; color:rgba(245,200,66,0.70); text-transform:uppercase; margin-top:3px; }
+
+    .bsc-toolbar { background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.08); padding:12px 26px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    .bsc-toolbar-left { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    .tbtn { font-family:var(--font-bc); font-weight:700; font-size:1.05rem; letter-spacing:0.10em; text-transform:uppercase; padding:10px 20px; border-radius:8px; border:none; cursor:pointer; transition:all 0.18s; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+    .tbtn-gold   { background:linear-gradient(135deg,#ffd740,#ffab00); color:#1a0030; box-shadow:0 4px 14px rgba(255,215,64,0.28); }
+    .tbtn-gold:hover   { transform:translateY(-1px); box-shadow:0 6px 20px rgba(255,215,64,0.42); }
+    .tbtn-pink   { background:linear-gradient(135deg,#ff4081,#e91e63); color:#fff; box-shadow:0 4px 14px rgba(255,64,129,0.30); }
+    .tbtn-pink:hover   { transform:translateY(-1px); box-shadow:0 6px 20px rgba(255,64,129,0.48); }
+    .tbtn-ghost  { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.16); color:rgba(255,255,255,0.70); }
+    .tbtn-ghost:hover  { background:rgba(255,255,255,0.14); color:#fff; }
+    .tbtn-danger { background:linear-gradient(135deg,#c62828,#e53935); color:#fff; box-shadow:0 4px 14px rgba(229,57,53,0.30); }
+    .tbtn-danger:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 6px 20px rgba(229,57,53,0.50); }
+    .tbtn-danger:disabled { opacity:0.35; cursor:not-allowed; }
+
+    .saved-badge { font-size:0.96rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#80cbc4; display:none; align-items:center; gap:6px; }
+    .saved-badge.show { display:flex; }
+
+    .bsc-info { background:rgba(255,255,255,0.028); border-bottom:1px solid rgba(255,255,255,0.08); padding:14px 26px; display:flex; gap:36px; align-items:center; flex-wrap:wrap; }
+    .info-field { display:flex; align-items:center; gap:12px; }
+    .info-label { font-size:0.96rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:rgba(245,200,66,0.75); white-space:nowrap; font-family:var(--font-bc); }
+    .info-input { font-size:1.2rem; font-weight:600; color:rgba(255,255,255,0.92); background:transparent; border:none; border-bottom:1.5px solid rgba(255,255,255,0.15); padding:5px 7px; outline:none; min-width:240px; transition:border-color 0.2s; font-family:var(--font-body); }
+    .info-input:focus { border-bottom-color:rgba(245,200,66,0.60); }
+    .info-input::placeholder { color:rgba(255,255,255,0.30); }
+    .info-divider { width:1px; height:30px; background:rgba(255,255,255,0.12); }
+
+    .bsc-section { background:linear-gradient(90deg,rgba(233,30,99,0.60),rgba(49,27,146,0.60)); border-top:1px solid rgba(255,64,129,0.30); border-bottom:1px solid rgba(255,64,129,0.20); padding:12px 26px; text-align:center; }
+    .bsc-section span { font-family:var(--font-bc); font-size:1.35rem; font-weight:800; letter-spacing:0.30em; text-transform:uppercase; color:#fff; }
+
+    .bsc-table-wrap { overflow-x:auto; }
+    .bsc-table { width:100%; min-width:800px; border-collapse:collapse; table-layout:fixed; }
+
+    .bsc-table thead tr.col-headers th { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.10); padding:14px 14px; font-size:1.0rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.80); text-align:center; font-family:var(--font-bc); white-space:nowrap; }
+    .bsc-table thead tr.col-headers th.left { text-align:left; }
+    .bsc-table thead tr.actual-headers th { background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.08); padding:9px 10px; font-size:0.96rem; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:rgba(245,200,66,0.80); text-align:center; font-family:var(--font-bc); }
+
+    .bsc-table tbody tr td { border:1px solid rgba(255,255,255,0.08); padding:0; vertical-align:top; }
+    .bsc-table tbody tr:nth-child(odd)  td { background:rgba(255,255,255,0.025); }
+    .bsc-table tbody tr:nth-child(even) td { background:rgba(255,255,255,0.010); }
+    .bsc-table tbody tr:hover td { background:rgba(255,64,129,0.08) !important; }
+
+    .cell-input { width:100%; background:transparent; border:none; outline:none; font-family:var(--font-body); font-size:1.05rem; color:rgba(255,255,255,0.85); padding:12px 14px; line-height:1.5; resize:none; overflow:hidden; min-height:48px; height:auto; transition:background 0.2s; display:block; }
+    .cell-input:focus    { background:rgba(245,200,66,0.07); color:#fff; }
+    .cell-input.initiative { font-weight:700; font-size:1.08rem; color:rgba(255,255,255,0.95); }
+    .cell-input.task       { font-size:1.02rem; color:rgba(255,255,255,0.68); }
+    .cell-input.indicator  { font-size:1.02rem; color:rgba(255,255,255,0.78); }
+    .cell-input.target     { text-align:center; font-weight:700; font-size:1.05rem; color:#ffd54f; padding:12px 8px; }
+    .cell-input.actual     { text-align:center; font-weight:600; font-size:1.05rem; color:#80cbc4; padding:12px 8px; }
+
+    td.actions-cell { padding:10px 8px; text-align:center; vertical-align:middle; width:44px; }
+    .row-checkbox { width:17px; height:17px; cursor:pointer; accent-color:#ff4081; }
+
+    .sig-bar { border-top:2px solid rgba(255,255,255,0.09); display:grid; grid-template-columns:1fr 1fr 1fr 1fr; }
+    .sig-cell { padding:16px 20px; border-right:1px solid rgba(255,255,255,0.08); }
+    .sig-cell:last-child { border-right:none; }
+    .sig-label { font-size:0.84rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:rgba(245,200,66,0.65); margin-bottom:6px; font-family:var(--font-bc); }
+    .sig-input { width:100%; background:transparent; border:none; border-bottom:1px solid rgba(255,255,255,0.12); outline:none; font-family:var(--font-body); font-size:1.05rem; font-weight:600; color:rgba(255,255,255,0.85); padding:5px 5px; transition:border-color 0.2s; }
+    .sig-input:focus { border-bottom-color:rgba(245,200,66,0.55); }
+    .sig-input::placeholder { color:rgba(255,255,255,0.28); }
+    .sig-sub { width:100%; background:transparent; border:none; outline:none; font-family:var(--font-body); font-size:0.93rem; color:rgba(255,255,255,0.45); padding:4px 5px; margin-top:4px; }
+    .sig-sub:focus { color:rgba(255,255,255,0.68); }
+    .sig-sub::placeholder { color:rgba(255,255,255,0.22); }
+
+    .bsc-footer { padding:12px 26px; border-top:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.014); }
+    .bsc-footer-text { font-size:0.84rem; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.22); font-weight:500; font-family:var(--font-bc); }
+    .gold-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#ffd54f; margin-right:6px; }
+
+    tr.editing td { outline:2px solid rgba(245,200,66,0.22); outline-offset:-2px; }
+
+    .toast { position:fixed; bottom:32px; right:32px; background:linear-gradient(135deg,var(--purple-dark),var(--pink)); color:#fff; padding:14px 22px; border-radius:var(--radius-md); font-family:var(--font-main); font-size:15px; font-weight:700; box-shadow:0 8px 28px rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.14); opacity:0; transform:translateY(14px); transition:opacity 0.25s,transform 0.25s; z-index:999; pointer-events:none; max-width:380px; }
+    .toast.show { opacity:1; transform:translateY(0); }
+    .toast.error { background:linear-gradient(135deg,#5c0a0a,#c62828); }
+
+    /* Clear All button */
+    .btn-clear-all {
+      background:rgba(229,57,53,0.18);
+      border:1px solid rgba(229,57,53,0.40);
+      color:#ef9a9a;
+      border-radius:6px;
+      padding:4px 11px;
+      font-family:var(--font-main);
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+      letter-spacing:0.4px;
+      transition:background 0.15s, color 0.15s;
+    }
+    .btn-clear-all:hover {
+      background:rgba(229,57,53,0.35);
+      color:#fff;
+    }
+
+    @media(max-width:768px) {
+      .app-shell { flex-direction:column; }
+      .sidebar { width:100%; height:auto; position:relative; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ══════════ SIDEBAR ══════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">👥</div>
+      <div>
+        <div class="brand-text">Personnel<br>Records</div>
+        <div class="brand-sub">UPLOAD · ENCODE · LOAD</div>
+      </div>
+    </div>
+    <div class="sidebar-body">
+
+      <!-- DB Status -->
+      <div style="display:flex;align-items:center;gap:9px;padding:6px 2px;">
+        <div class="supa-status-dot" id="supaStatusDot" title="Connecting..."></div>
+        <span style="font-family:var(--font-main);font-size:13px;font-weight:700;color:rgba(128,203,196,0.80);" id="supaStatusLabel">Connecting to database…</span>
+      </div>
+
+      <!-- Upload -->
+      <div class="sb-label">Upload File</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" accept=".csv,.xlsx,.xls,.txt" id="fileInput"/>
+        <div class="upload-icon">📂</div>
+        <span class="upload-label">Drop file or click to browse</span>
+        <span class="upload-hint">Supports CSV · XLSX · TXT</span>
+      </div>
+
+      <!-- Encode -->
+      <div class="sb-label">Encode Manually</div>
+      <div class="encode-area">
+        <div class="encode-title">✏️ Add Personnel</div>
+        <div class="encode-row"><input type="text" id="inputName" placeholder="Full Name"/></div>
+        <div class="encode-row">
+          <input type="text" id="inputDesig" placeholder="Designation / Rank"/>
+          <button class="btn-add" id="btnAdd" title="Add">+</button>
+        </div>
+      </div>
+
+      <!-- List header with Clear All -->
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="sb-label">Personnel List</div>
+        <button class="btn-clear-all" onclick="clearAllPersonnel()" title="Clear entire list">✕ Clear All</button>
+      </div>
+
+      <div class="personnel-list" id="personnelList">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🗂️</div>
+          No personnel added yet.<br>Upload a file or encode manually.
+        </div>
+      </div>
+      <button class="btn-load" id="btnLoad">📋 Load Selected to Form</button>
+      <div class="auto-load-hint" id="autoLoadHint" style="display:none;">✦ Click a name to instantly switch</div>
+    </div>
+    <div class="sidebar-footer">
+      <span class="footer-label">Total Personnel</span>
+      <span class="count-badge" id="countBadge">0</span>
+    </div>
+  </aside>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <main class="main-content">
+    <div>
+      <div class="page-title">Performance <span>Assessment</span> Form</div>
+      <div class="page-sub">Connect to Supabase, select a personnel, then load. All saves go to the database.</div>
+    </div>
+
+    <div class="active-personnel-banner" id="activeBanner">
+      <div class="apb-dot"></div>
+      <span>Now viewing:</span>
+      <span class="apb-name" id="activeBannerName"></span>
+      <span style="font-size:13px;opacity:0.6;margin-left:auto;">Saves go to Supabase ✓</span>
+    </div>
+
+    <!-- PROFESSIONAL PERSPECTIVE CARD -->
+    <div class="bsc-card">
+      <div class="bsc-header">
+        <div>
+          <div class="bsc-header-title">Individual Balanced Scorecard</div>
+          <div class="bsc-header-year">HPN &amp; HSG · CY 2025</div>
+        </div>
+      </div>
+      <div class="bsc-toolbar">
+        <div class="bsc-toolbar-left">
+          <button class="tbtn tbtn-gold"   onclick="savePro()">💾 Save</button>
+          <button class="tbtn tbtn-pink"   onclick="addProRow()">＋ Add Row</button>
+          <button class="tbtn tbtn-danger" id="btnDelPro" onclick="deleteProSelected()" disabled>🗑 Delete Selected</button>
+          <button class="tbtn tbtn-ghost"  onclick="window.print()">🖨 Print</button>
+        </div>
+        <div class="saved-badge" id="savedBadgePro">✓ Saved to DB</div>
+      </div>
+      <div class="bsc-info">
+        <div class="info-field">
+          <span class="info-label">Name:</span>
+          <input class="info-input" id="prof-name" placeholder="Full Name"/>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-field">
+          <span class="info-label">Designation:</span>
+          <input class="info-input" id="prof-desig" placeholder="Position / Title"/>
+        </div>
+      </div>
+      <div class="bsc-section"><span>Professional Perspective</span></div>
+      <div class="bsc-table-wrap">
+        <table class="bsc-table">
+          <thead>
+            <tr class="col-headers">
+              <th class="left" style="width:20%">Strategic Initiative</th>
+              <th class="left" style="width:18%">Strategic Tasks</th>
+              <th class="left" style="width:22%">Success Indicator</th>
+              <th style="width:7%">Target</th>
+              <th colspan="4">Actual</th>
+              <th style="width:44px"><input type="checkbox" id="selectAllPro" onclick="toggleAllPro(this)" style="accent-color:#ff4081;width:16px;height:16px;cursor:pointer;" title="Select All"/></th>
+            </tr>
+            <tr class="actual-headers">
+              <th colspan="4"></th>
+              <th style="width:7%">Q1</th>
+              <th style="width:7%">Q2</th>
+              <th style="width:7%">Q3</th>
+              <th style="width:7%">Q4</th>
+              <th style="width:44px"></th>
+            </tr>
+          </thead>
+          <tbody id="proBody"></tbody>
+        </table>
+      </div>
+      <div class="sig-bar">
+        <div class="sig-cell">
+          <div class="sig-label">Prepared by with Signature</div>
+          <input class="sig-input" id="pro-sig-name"  placeholder="Name"/>
+          <input class="sig-sub"   id="pro-sig-desig" placeholder="Designation"/>
+        </div>
+        <div class="sig-cell">
+          <div class="sig-label">Date</div>
+          <input class="sig-input" id="pro-sig-date" type="date"/>
+        </div>
+        <div class="sig-cell">
+          <div class="sig-label">Noted with Signature</div>
+          <input class="sig-input" id="pro-noted-name"  placeholder="Name"/>
+          <input class="sig-sub"   id="pro-noted-desig" placeholder="Designation"/>
+        </div>
+        <div class="sig-cell">
+          <div class="sig-label">Date</div>
+          <input class="sig-input" id="pro-noted-date" type="date"/>
+        </div>
+      </div>
+      <div class="bsc-footer">
+        <span class="bsc-footer-text"><span class="gold-dot"></span>HPN &amp; HSG · Professional Perspective · CY 2025</span>
+        <span class="bsc-footer-text">Philippine Navy · Sail Plan 2040 Vision</span>
+      </div>
+    </div>
+
+    <!-- PERSONAL PERSPECTIVE CARD -->
+    <div class="bsc-card">
+      <div class="bsc-header">
+        <div>
+          <div class="bsc-header-title">Individual Balanced Scorecard</div>
+          <div class="bsc-header-year">HPN &amp; HSG · Personal · CY 2025</div>
+        </div>
+      </div>
+      <div class="bsc-toolbar">
+        <div class="bsc-toolbar-left">
+          <button class="tbtn tbtn-gold"   onclick="savePers()">💾 Save</button>
+          <button class="tbtn tbtn-danger" id="btnDelPers" onclick="deletePersSelected()" disabled>🗑 Delete Selected</button>
+          <button class="tbtn tbtn-ghost"  onclick="window.print()">🖨 Print</button>
+        </div>
+        <div class="saved-badge" id="savedBadgePers">✓ Saved to DB</div>
+      </div>
+      <div class="bsc-info">
+        <div class="info-field">
+          <span class="info-label">Name:</span>
+          <input class="info-input" id="pers-name" placeholder="Full Name"/>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-field">
+          <span class="info-label">Designation:</span>
+          <input class="info-input" id="pers-desig" placeholder="Position / Title"/>
+        </div>
+      </div>
+      <div class="bsc-section"><span>Personal Perspective</span></div>
+      <div class="bsc-table-wrap">
+        <table class="bsc-table">
+          <thead>
+            <tr class="col-headers">
+              <th class="left" style="width:11%">Areas</th>
+              <th class="left" style="width:22%">Initiatives</th>
+              <th class="left" style="width:22%">Measure / Success Indicator</th>
+              <th style="width:7%">Target</th>
+              <th colspan="4">Actual</th>
+              <th style="width:4%"><input type="checkbox" id="selectAllPers" onclick="toggleAllPers(this)" style="accent-color:#ff4081;width:16px;height:16px;cursor:pointer;" title="Select All"/></th>
+            </tr>
+            <tr class="actual-headers">
+              <th colspan="4"></th>
+              <th style="width:7%">Q1</th>
+              <th style="width:7%">Q2</th>
+              <th style="width:7%">Q3</th>
+              <th style="width:7%">Q4</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="persBody"></tbody>
+        </table>
+      </div>
+      <div class="sig-bar">
+        <div class="sig-cell">
+          <div class="sig-label">Prepared by with Signature</div>
+          <input class="sig-input" id="pers-sig-name"  placeholder="Name"/>
+          <input class="sig-sub"   id="pers-sig-desig" placeholder="Designation"/>
+        </div>
+        <div class="sig-cell">
+          <div class="sig-label">Date</div>
+          <input class="sig-input" id="pers-sig-date" type="date"/>
+        </div>
+        <div class="sig-cell">
+          <div class="sig-label">Noted with Signature</div>
+          <input class="sig-input" id="pers-noted-name"  placeholder="Name"/>
+          <input class="sig-sub"   id="pers-noted-desig" placeholder="Designation"/>
+        </div>
+        <div class="sig-cell">
+          <div class="sig-label">Date</div>
+          <input class="sig-input" id="pers-noted-date" type="date"/>
+        </div>
+      </div>
+      <div class="bsc-footer">
+        <span class="bsc-footer-text"><span class="gold-dot"></span>HPN &amp; HSG · Personal Perspective · CY 2025</span>
+        <span class="bsc-footer-text">Philippine Navy · Sail Plan 2040 Vision</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+function getInitials(name) { return name.trim().split(/\s+/).map(w => w[0]).join('').substring(0,2).toUpperCase(); }
+function esc(v) { return (v||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function autoResize(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+
+/* ══════════════════════════════════════════════════
+   SUPABASE CLIENT
+══════════════════════════════════════════════════ */
+const SUPA_URL = "https://pyciacmxcnktwhpvfdsh.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5Y2lhY214Y25rdHdocHZmZHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMDE4ODIsImV4cCI6MjA4OTg3Nzg4Mn0.B082A3lKWk6g0EH59M-A8sEl2KNyKfZOHYdkkuWmXnc";
+
+let sb = null;
+
+function setDot(state, label) {
+  const dot = document.getElementById('supaStatusDot');
+  const lbl = document.getElementById('supaStatusLabel');
+  dot.className = 'supa-status-dot ' + state;
+  if (label && lbl) lbl.textContent = label;
+}
+
+async function connectSupabase() {
+  setDot('connecting', 'Connecting to database…');
+  try {
+    sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+    const { error } = await sb.from('personnel').select('id').limit(1);
+    if (error) throw error;
+    setDot('connected', '✓ Database connected');
+    await fetchPersonnelFromDB();
+  } catch (err) {
+    setDot('error', '✗ Connection failed');
+    showToast('❌ DB connection failed: ' + (err.message || err), true);
+    console.error('Supabase connect error:', err);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => connectSupabase());
+
+/* ══════════════════════════════════════════════════
+   DB OPERATIONS
+══════════════════════════════════════════════════ */
+async function fetchPersonnelFromDB() {
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.from('personnel').select('name, designation').order('created_at', { ascending: true });
+    if (error) throw error;
+    if (data && data.length > 0) {
+      data.forEach(row => {
+        if (!personnel.find(p => p.name === row.name)) {
+          personnel.push({ name: row.name, desig: row.designation || '' });
+        }
+      });
+      renderList();
+      showToast(`📂 ${data.length} personnel loaded from database.`);
+    }
+  } catch (err) {
+    showToast('⚠️ Could not load personnel: ' + err.message, true);
+    console.error(err);
+  }
+}
+
+async function upsertPersonnelToDB(p) {
+  if (!sb) return;
+  try {
+    const { error } = await sb.from('personnel').upsert(
+      { name: p.name, designation: p.desig },
+      { onConflict: 'name' }
+    );
+    if (error) throw error;
+  } catch (err) {
+    console.error('upsertPersonnelToDB error:', err);
+    showToast('⚠️ DB: ' + err.message, true);
+  }
+}
+
+async function saveProToDB(personnelName) {
+  if (!sb) return false;
+  const store = personnelStore[personnelName];
+  if (!store) return false;
+  const pm = store.proMeta;
+  try {
+    const { error } = await sb.from('bsc_professional').upsert({
+      personnel_name: personnelName,
+      meta_name:    pm.name,
+      meta_desig:   pm.desig,
+      sig_name:     pm.sigName,
+      sig_desig:    pm.sigDesig,
+      sig_date:     pm.sigDate,
+      noted_name:   pm.notedName,
+      noted_desig:  pm.notedDesig,
+      noted_date:   pm.notedDate,
+      rows:         store.proRows,
+    }, { onConflict: 'personnel_name' });
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error('saveProToDB error:', err);
+    showToast('❌ DB save failed: ' + err.message, true);
+    return false;
+  }
+}
+
+async function savePersToDB(personnelName) {
+  if (!sb) return false;
+  const store = personnelStore[personnelName];
+  if (!store) return false;
+  const qm = store.persMeta;
+  try {
+    const { error } = await sb.from('bsc_personal').upsert({
+      personnel_name: personnelName,
+      meta_name:    qm.name,
+      meta_desig:   qm.desig,
+      sig_name:     qm.sigName,
+      sig_desig:    qm.sigDesig,
+      sig_date:     qm.sigDate,
+      noted_name:   qm.notedName,
+      noted_desig:  qm.notedDesig,
+      noted_date:   qm.notedDate,
+      rows:         store.persRows,
+    }, { onConflict: 'personnel_name' });
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error('savePersToDB error:', err);
+    showToast('❌ DB save failed: ' + err.message, true);
+    return false;
+  }
+}
+
+async function loadBSCFromDB(personnelName) {
+  if (!sb) return null;
+  try {
+    const [proRes, persRes] = await Promise.all([
+      sb.from('bsc_professional').select('*').eq('personnel_name', personnelName).maybeSingle(),
+      sb.from('bsc_personal').select('*').eq('personnel_name', personnelName).maybeSingle(),
+    ]);
+    return {
+      pro:  proRes.data  || null,
+      pers: persRes.data || null,
+    };
+  } catch (err) {
+    console.error('loadBSCFromDB error:', err);
+    return null;
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   DEFAULT ROW DATA
+══════════════════════════════════════════════════ */
+const proDefaultRows = [
+  { initiative:"1. Implement Professional and Physical Development Program", task:"Ensure to provide Sufficient and Qualified Personnel", indicator:"AFPJRRS Personnel Readiness", target:"", q1:"", q2:"", q3:"", q4:"" },
+  { initiative:"2. Enhance Implementation of Personnel Development System",  task:"Ensure to Develop and Sustain Highly Competent Personnel", indicator:"Training Readiness Rating", target:"", q1:"", q2:"", q3:"", q4:"" },
+  { initiative:"3. Implement Morale and Character-Building Program", task:"Ensure to Sustain Morally Upright and Motivated Personnel", indicator:"Personnel Compliant to AFP and CSC Rules and Regulations", target:"", q1:"", q2:"", q3:"", q4:"" },
+  { initiative:"", task:"", indicator:"Leadership, Morale and Discipline Survey Rating", target:"", q1:"", q2:"", q3:"", q4:"" },
+  { initiative:"4. Establish Responsive Management System", task:"Ensure to Sustain a Dynamic and Responsive Multi-capable Unit", indicator:"% of Table of Organization Fill up", target:"", q1:"", q2:"", q3:"", q4:"" },
+  { initiative:"5. Ensure Timely and Judicious Implementation of Financial Programs", task:"Ensure to implement effective and efficient Financial Management", indicator:"% of Obligation Rate", target:"", q1:"", q2:"", q3:"", q4:"" },
+  { initiative:"", task:"", indicator:"% of Disbursement Rate", target:"", q1:"", q2:"", q3:"", q4:"" },
+  { initiative:"6. Ensure Implementation of Equipment and Facility Maintenance Program", task:"Ensure to sustain reliable Equipment and Facilities", indicator:"% of Equipment Readiness Rating", target:"", q1:"", q2:"", q3:"", q4:"" },
+  { initiative:"7. Ensure Unit Operational Readiness", task:"Ensure optimal level of Operational Readiness", indicator:"% AFP JRRS Rating (Unit Aggregate)", target:"", q1:"", q2:"", q3:"", q4:"" },
+  { initiative:"8. Execute Initiatives to Accomplish Unit Mission", task:"Ensure effective and efficient delivery of Primary Unit Mandate", indicator:"Nr of Activities Conducted", target:"", q1:"", q2:"", q3:"", q4:"" },
+];
+
+const persDefaultRows = [
+  { area:"Career",    initiative:"File SALN",                               indicator:"1",                               target:"1",                    q1:"", q2:"", q3:"", q4:"" },
+  { area:"",          initiative:"Complete PFT",                            indicator:"1",                               target:"1",                    q1:"", q2:"", q3:"", q4:"" },
+  { area:"",          initiative:"Complete APE",                            indicator:"1",                               target:"1",                    q1:"", q2:"", q3:"", q4:"" },
+  { area:"",          initiative:"Accomplish PER/PCR",                      indicator:"2",                               target:"2",                    q1:"", q2:"", q3:"", q4:"" },
+  { area:"Spiritual", initiative:"Attend Mass (including online)",          indicator:"Nr of Mass attended",              target:"As often as possible", q1:"", q2:"", q3:"", q4:"" },
+  { area:"Family",    initiative:"Family Quality Time",                     indicator:"As often as possible",            target:"As often as possible", q1:"", q2:"", q3:"", q4:"" },
+  { area:"Financial", initiative:"Increase Capital Contribution",           indicator:"Confidential",                    target:"Confidential",         q1:"", q2:"", q3:"", q4:"" },
+  { area:"Social",    initiative:"To attend social gatherings/activities",  indicator:"Nr of social gatherings attended", target:"As often as possible", q1:"", q2:"", q3:"", q4:"" },
+  { area:"Physical",  initiative:"Conduct of Physical Exercise",            indicator:"Nr of hours allotted",            target:"Situational",          q1:"", q2:"", q3:"", q4:"" },
+];
+
+/* ══════════════════════════════════════════════════
+   PER-PERSONNEL IN-MEMORY STORE
+══════════════════════════════════════════════════ */
+const personnelStore = {};
+
+function ensureStore(p) {
+  if (!personnelStore[p.name]) {
+    personnelStore[p.name] = {
+      proRows:  proDefaultRows.map(r => ({...r})),
+      persRows: persDefaultRows.map(r => ({...r})),
+      proMeta:  { name:p.name, desig:p.desig, sigName:p.name, sigDesig:p.desig, sigDate:'', notedName:'', notedDesig:'', notedDate:'' },
+      persMeta: { name:p.name, desig:p.desig, sigName:p.name, sigDesig:p.desig, sigDate:'', notedName:'', notedDesig:'', notedDate:'' },
+    };
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   SIDEBAR — PERSONNEL
+══════════════════════════════════════════════════ */
+let personnel = [], selectedIndex = null, activePersonnelKey = null;
+
+function renderList() {
+  const list = document.getElementById('personnelList');
+  document.getElementById('countBadge').textContent = personnel.length;
+  document.getElementById('autoLoadHint').style.display = personnel.length > 0 ? 'block' : 'none';
+
+  if (personnel.length === 0) {
+    list.innerHTML = '';
+    list.appendChild(document.getElementById('emptyState'));
+    return;
+  }
+  list.innerHTML = '';
+  personnel.forEach((p, i) => {
+    const hasData = !!personnelStore[p.name];
+    const item = document.createElement('div');
+    item.className = 'personnel-item' + (i === selectedIndex ? ' active' : '');
+    item.innerHTML = `
+      <div class="avatar">${getInitials(p.name)}</div>
+      <div class="p-info">
+        <div class="p-name">${p.name}</div>
+        <div class="p-desig">${p.desig || '—'}</div>
+      </div>
+      ${hasData ? '<div class="has-data-dot" title="Has saved data"></div>' : ''}
+      <button class="btn-del" data-idx="${i}" title="Remove">✕</button>`;
+    item.addEventListener('click', e => {
+      if (e.target.classList.contains('btn-del')) return;
+      selectedIndex = i;
+      renderList();
+      loadPersonnelToForm(personnel[i]);
+    });
+    list.appendChild(item);
+  });
+  list.querySelectorAll('.btn-del').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx);
+      const removedName = personnel[idx].name;
+      if (!confirm(`Remove "${removedName}" from the list? (Does not delete from database)`)) return;
+      personnel.splice(idx, 1);
+      if (selectedIndex === idx) selectedIndex = null;
+      else if (selectedIndex > idx) selectedIndex--;
+      renderList();
+      showToast('Personnel removed from list.');
+      if (activePersonnelKey === removedName) { activePersonnelKey = null; clearForms(); }
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════
+   CLEAR ALL PERSONNEL
+══════════════════════════════════════════════════ */
+function clearAllPersonnel() {
+  if (personnel.length === 0) { showToast('⚠️ List is already empty.'); return; }
+  if (!confirm(`Remove all ${personnel.length} personnel from the list?\n\nNote: This does NOT delete records from the database.`)) return;
+  personnel = [];
+  selectedIndex = null;
+  activePersonnelKey = null;
+  clearForms();
+  renderList();
+  showToast('🗑 All personnel cleared. Ready for a new list.');
+}
+
+document.getElementById('btnAdd').addEventListener('click', async () => {
+  const name  = document.getElementById('inputName').value.trim();
+  const desig = document.getElementById('inputDesig').value.trim();
+  if (!name) { showToast('⚠️ Please enter a name first.'); return; }
+  if (personnel.find(p => p.name === name)) { showToast('⚠️ This person is already in the list.'); return; }
+  personnel.push({ name, desig });
+  document.getElementById('inputName').value  = '';
+  document.getElementById('inputDesig').value = '';
+  renderList();
+  await upsertPersonnelToDB({ name, desig });
+  showToast(`✅ "${name}" added${sb ? ' and saved to database' : ''}.`);
+});
+['inputName','inputDesig'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btnAdd').click(); });
+});
+
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) processFile(fileInput.files[0]); });
+
+async function processFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const parseAndSave = async (newPersonnel) => {
+    let added = 0;
+    const toSave = [];
+    newPersonnel.forEach(p => {
+      if (!personnel.find(x => x.name === p.name)) { personnel.push(p); toSave.push(p); added++; }
+    });
+    renderList();
+    if (sb && toSave.length > 0) {
+      const rows = toSave.map(p => ({ name: p.name, designation: p.desig }));
+      const { error } = await sb.from('personnel').upsert(rows, { onConflict: 'name' });
+      if (error) showToast('⚠️ DB batch save failed: ' + error.message, true);
+      else showToast(`📂 ${added} personnel loaded${sb ? ' & saved to DB' : ''}.`);
+    } else {
+      showToast(`📂 ${added} personnel loaded.`);
+    }
+  };
+
+  if (ext === 'xlsx' || ext === 'xls') {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      try {
+        const data  = new Uint8Array(e.target.result);
+        const wb    = XLSX.read(data, { type:'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows  = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+        const list  = rows.map(row => ({ name:(row[0]||'').toString().trim(), desig:(row[1]||'').toString().trim() }))
+                          .filter(p => p.name && p.name.toLowerCase() !== 'name');
+        await parseAndSave(list);
+      } catch(err) { showToast('❌ Could not read Excel file.', true); console.error(err); }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      const list = e.target.result.split(/\r?\n/).filter(l => l.trim()).map(line => {
+        const parts = line.split(/[,\t|]/).map(s => s.trim());
+        return { name: parts[0], desig: parts[1] || '' };
+      }).filter(p => p.name && p.name.toLowerCase() !== 'name');
+      await parseAndSave(list);
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   LOAD / SAVE FORM DATA PER PERSONNEL
+══════════════════════════════════════════════════ */
+function saveCurrentToStore() {
+  if (!activePersonnelKey) return;
+  const store = personnelStore[activePersonnelKey];
+  if (!store) return;
+  store.proRows  = proRows.map(r => ({...r}));
+  store.persRows = persRows.map(r => ({...r}));
+  store.proMeta  = {
+    name:       document.getElementById('prof-name').value,
+    desig:      document.getElementById('prof-desig').value,
+    sigName:    document.getElementById('pro-sig-name').value,
+    sigDesig:   document.getElementById('pro-sig-desig').value,
+    sigDate:    document.getElementById('pro-sig-date').value,
+    notedName:  document.getElementById('pro-noted-name').value,
+    notedDesig: document.getElementById('pro-noted-desig').value,
+    notedDate:  document.getElementById('pro-noted-date').value,
+  };
+  store.persMeta = {
+    name:       document.getElementById('pers-name').value,
+    desig:      document.getElementById('pers-desig').value,
+    sigName:    document.getElementById('pers-sig-name').value,
+    sigDesig:   document.getElementById('pers-sig-desig').value,
+    sigDate:    document.getElementById('pers-sig-date').value,
+    notedName:  document.getElementById('pers-noted-name').value,
+    notedDesig: document.getElementById('pers-noted-desig').value,
+    notedDate:  document.getElementById('pers-noted-date').value,
+  };
+}
+
+async function loadPersonnelToForm(p) {
+  if (activePersonnelKey && activePersonnelKey !== p.name) saveCurrentToStore();
+
+  ensureStore(p);
+  activePersonnelKey = p.name;
+
+  if (sb) {
+    showToast('⏳ Loading from database...');
+    const dbData = await loadBSCFromDB(p.name);
+    if (dbData) {
+      const store = personnelStore[p.name];
+      if (dbData.pro) {
+        store.proRows = Array.isArray(dbData.pro.rows) ? dbData.pro.rows : proDefaultRows.map(r=>({...r}));
+        store.proMeta = {
+          name:       dbData.pro.meta_name  || p.name,
+          desig:      dbData.pro.meta_desig || p.desig,
+          sigName:    dbData.pro.sig_name   || '',
+          sigDesig:   dbData.pro.sig_desig  || '',
+          sigDate:    dbData.pro.sig_date   || '',
+          notedName:  dbData.pro.noted_name || '',
+          notedDesig: dbData.pro.noted_desig || '',
+          notedDate:  dbData.pro.noted_date  || '',
+        };
+      }
+      if (dbData.pers) {
+        store.persRows = Array.isArray(dbData.pers.rows) ? dbData.pers.rows : persDefaultRows.map(r=>({...r}));
+        store.persMeta = {
+          name:       dbData.pers.meta_name  || p.name,
+          desig:      dbData.pers.meta_desig || p.desig,
+          sigName:    dbData.pers.sig_name   || '',
+          sigDesig:   dbData.pers.sig_desig  || '',
+          sigDate:    dbData.pers.sig_date   || '',
+          notedName:  dbData.pers.noted_name || '',
+          notedDesig: dbData.pers.noted_desig || '',
+          notedDate:  dbData.pers.noted_date  || '',
+        };
+      }
+    }
+  }
+
+  const store = personnelStore[p.name];
+  proRows  = store.proRows.map(r => ({...r}));
+  persRows = store.persRows.map(r => ({...r}));
+  renderPro(); renderPers();
+
+  const pm = store.proMeta;
+  document.getElementById('prof-name').value       = pm.name;
+  document.getElementById('prof-desig').value      = pm.desig;
+  document.getElementById('pro-sig-name').value    = pm.sigName;
+  document.getElementById('pro-sig-desig').value   = pm.sigDesig;
+  document.getElementById('pro-sig-date').value    = pm.sigDate;
+  document.getElementById('pro-noted-name').value  = pm.notedName;
+  document.getElementById('pro-noted-desig').value = pm.notedDesig;
+  document.getElementById('pro-noted-date').value  = pm.notedDate;
+
+  const qm = store.persMeta;
+  document.getElementById('pers-name').value        = qm.name;
+  document.getElementById('pers-desig').value       = qm.desig;
+  document.getElementById('pers-sig-name').value    = qm.sigName;
+  document.getElementById('pers-sig-desig').value   = qm.sigDesig;
+  document.getElementById('pers-sig-date').value    = qm.sigDate;
+  document.getElementById('pers-noted-name').value  = qm.notedName;
+  document.getElementById('pers-noted-desig').value = qm.notedDesig;
+  document.getElementById('pers-noted-date').value  = qm.notedDate;
+
+  const banner = document.getElementById('activeBanner');
+  banner.classList.add('show');
+  document.getElementById('activeBannerName').textContent = p.name + (p.desig ? ` — ${p.desig}` : '');
+
+  renderList();
+  showToast(`✅ Loaded "${p.name}"${sb ? ' from database' : ''}`);
+}
+
+function clearForms() {
+  ['prof-name','prof-desig','pro-sig-name','pro-sig-desig','pro-sig-date','pro-noted-name','pro-noted-desig','pro-noted-date',
+   'pers-name','pers-desig','pers-sig-name','pers-sig-desig','pers-sig-date','pers-noted-name','pers-noted-desig','pers-noted-date'
+  ].forEach(id => document.getElementById(id).value = '');
+  proRows  = proDefaultRows.map(r => ({...r}));
+  persRows = persDefaultRows.map(r => ({...r}));
+  renderPro(); renderPers();
+  document.getElementById('activeBanner').classList.remove('show');
+}
+
+document.getElementById('btnLoad').addEventListener('click', () => {
+  if (selectedIndex === null) { showToast('⚠️ Select a personnel from the list first.'); return; }
+  loadPersonnelToForm(personnel[selectedIndex]);
+});
+
+/* ══════════════════════════════════════════════════
+   PROFESSIONAL TABLE
+══════════════════════════════════════════════════ */
+let proRows = proDefaultRows.map(r => ({...r}));
+
+function renderPro() {
+  const tbody = document.getElementById('proBody');
+  tbody.innerHTML = '';
+  proRows.forEach((r, i) => tbody.appendChild(makeProRow(r, i)));
+  requestAnimationFrame(() => document.querySelectorAll('#proBody .cell-input').forEach(autoResize));
+}
+
+function makeProRow(r, i) {
+  const tr = document.createElement('tr');
+  tr.id = 'pro_row_' + i;
+  tr.innerHTML = `
+    <td><textarea class="cell-input initiative" data-i="${i}" data-f="initiative">${esc(r.initiative)}</textarea></td>
+    <td><textarea class="cell-input task"       data-i="${i}" data-f="task">${esc(r.task)}</textarea></td>
+    <td><textarea class="cell-input indicator"  data-i="${i}" data-f="indicator">${esc(r.indicator)}</textarea></td>
+    <td><textarea class="cell-input target"     data-i="${i}" data-f="target">${esc(r.target)}</textarea></td>
+    <td><textarea class="cell-input actual"     data-i="${i}" data-f="q1">${esc(r.q1)}</textarea></td>
+    <td><textarea class="cell-input actual"     data-i="${i}" data-f="q2">${esc(r.q2)}</textarea></td>
+    <td><textarea class="cell-input actual"     data-i="${i}" data-f="q3">${esc(r.q3)}</textarea></td>
+    <td><textarea class="cell-input actual"     data-i="${i}" data-f="q4">${esc(r.q4)}</textarea></td>
+    <td class="actions-cell"><input type="checkbox" class="row-checkbox" data-i="${i}" onchange="updateProDeleteBtn()"/></td>`;
+  tr.querySelectorAll('.cell-input').forEach(el => {
+    autoResize(el);
+    el.addEventListener('input', () => {
+      autoResize(el);
+      proRows[+el.dataset.i][el.dataset.f] = el.value;
+      tr.classList.add('editing');
+      if (activePersonnelKey && personnelStore[activePersonnelKey])
+        personnelStore[activePersonnelKey].proRows = proRows.map(r => ({...r}));
+    });
+  });
+  return tr;
+}
+
+function toggleAllPro(master) { document.querySelectorAll('#proBody .row-checkbox').forEach(cb => cb.checked = master.checked); updateProDeleteBtn(); }
+function updateProDeleteBtn() { document.getElementById('btnDelPro').disabled = ![...document.querySelectorAll('#proBody .row-checkbox')].some(cb => cb.checked); }
+function deleteProSelected() {
+  const checked = [...document.querySelectorAll('#proBody .row-checkbox')].filter(cb => cb.checked).map(cb => +cb.dataset.i);
+  if (!checked.length) return;
+  if (!confirm(`Delete ${checked.length} row(s)?`)) return;
+  checked.sort((a,b)=>b-a).forEach(i => proRows.splice(i,1));
+  if (activePersonnelKey && personnelStore[activePersonnelKey]) personnelStore[activePersonnelKey].proRows = proRows.map(r=>({...r}));
+  renderPro(); document.getElementById('btnDelPro').disabled = true;
+  showToast(`${checked.length} row(s) deleted`);
+}
+function addProRow() {
+  proRows.push({ initiative:"", task:"", indicator:"", target:"", q1:"", q2:"", q3:"", q4:"" });
+  if (activePersonnelKey && personnelStore[activePersonnelKey]) personnelStore[activePersonnelKey].proRows = proRows.map(r=>({...r}));
+  renderPro();
+  document.getElementById('proBody').lastChild?.scrollIntoView({ behavior:'smooth', block:'center' });
+  showToast('New row added ✓');
+}
+async function savePro() {
+  saveCurrentToStore();
+  document.querySelectorAll('#proBody tr.editing').forEach(tr => tr.classList.remove('editing'));
+  let msg = '✓ Professional data saved';
+  if (sb && activePersonnelKey) {
+    const ok = await saveProToDB(activePersonnelKey);
+    msg = ok ? `✓ Saved to Supabase for ${activePersonnelKey}` : '⚠️ Saved locally only (DB failed)';
+  }
+  const badge = document.getElementById('savedBadgePro');
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 2400);
+  renderList();
+  showToast(msg);
+}
+
+/* ══════════════════════════════════════════════════
+   PERSONAL TABLE
+══════════════════════════════════════════════════ */
+let persRows = persDefaultRows.map(r => ({...r}));
+
+function renderPers() {
+  const tbody = document.getElementById('persBody');
+  tbody.innerHTML = '';
+  persRows.forEach((r, i) => tbody.appendChild(makePersRow(r, i)));
+  requestAnimationFrame(() => document.querySelectorAll('#persBody .cell-input').forEach(autoResize));
+}
+
+function makePersRow(r, i) {
+  const tr = document.createElement('tr');
+  tr.id = 'pers_row_' + i;
+  tr.innerHTML = `
+    <td><textarea class="cell-input initiative" data-i="${i}" data-f="area">${esc(r.area)}</textarea></td>
+    <td><textarea class="cell-input task"       data-i="${i}" data-f="initiative">${esc(r.initiative)}</textarea></td>
+    <td><textarea class="cell-input indicator"  data-i="${i}" data-f="indicator">${esc(r.indicator)}</textarea></td>
+    <td><textarea class="cell-input target"     data-i="${i}" data-f="target">${esc(r.target)}</textarea></td>
+    <td><textarea class="cell-input actual"     data-i="${i}" data-f="q1">${esc(r.q1)}</textarea></td>
+    <td><textarea class="cell-input actual"     data-i="${i}" data-f="q2">${esc(r.q2)}</textarea></td>
+    <td><textarea class="cell-input actual"     data-i="${i}" data-f="q3">${esc(r.q3)}</textarea></td>
+    <td><textarea class="cell-input actual"     data-i="${i}" data-f="q4">${esc(r.q4)}</textarea></td>
+    <td class="actions-cell"><input type="checkbox" class="row-checkbox" data-i="${i}" onchange="updatePersDeleteBtn()"/></td>`;
+  tr.querySelectorAll('.cell-input').forEach(el => {
+    autoResize(el);
+    el.addEventListener('input', () => {
+      autoResize(el);
+      persRows[+el.dataset.i][el.dataset.f] = el.value;
+      tr.classList.add('editing');
+      if (activePersonnelKey && personnelStore[activePersonnelKey])
+        personnelStore[activePersonnelKey].persRows = persRows.map(r => ({...r}));
+    });
+  });
+  return tr;
+}
+
+function toggleAllPers(master) { document.querySelectorAll('#persBody .row-checkbox').forEach(cb => cb.checked = master.checked); updatePersDeleteBtn(); }
+function updatePersDeleteBtn() { document.getElementById('btnDelPers').disabled = ![...document.querySelectorAll('#persBody .row-checkbox')].some(cb => cb.checked); }
+function deletePersSelected() {
+  const checked = [...document.querySelectorAll('#persBody .row-checkbox')].filter(cb => cb.checked).map(cb => +cb.dataset.i);
+  if (!checked.length) return;
+  if (!confirm(`Delete ${checked.length} row(s)?`)) return;
+  checked.sort((a,b)=>b-a).forEach(i => persRows.splice(i,1));
+  if (activePersonnelKey && personnelStore[activePersonnelKey]) personnelStore[activePersonnelKey].persRows = persRows.map(r=>({...r}));
+  renderPers(); document.getElementById('btnDelPers').disabled = true;
+  showToast(`${checked.length} row(s) deleted`);
+}
+async function savePers() {
+  saveCurrentToStore();
+  document.querySelectorAll('#persBody tr.editing').forEach(tr => tr.classList.remove('editing'));
+  let msg = '✓ Personal data saved';
+  if (sb && activePersonnelKey) {
+    const ok = await savePersToDB(activePersonnelKey);
+    msg = ok ? `✓ Saved to Supabase for ${activePersonnelKey}` : '⚠️ Saved locally only (DB failed)';
+  }
+  const badge = document.getElementById('savedBadgePers');
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 2400);
+  renderList();
+  showToast(msg);
+}
+
+['prof-name','prof-desig','pro-sig-name','pro-sig-desig','pro-sig-date','pro-noted-name','pro-noted-desig','pro-noted-date',
+ 'pers-name','pers-desig','pers-sig-name','pers-sig-desig','pers-sig-date','pers-noted-name','pers-noted-desig','pers-noted-date'
+].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => { if (activePersonnelKey && personnelStore[activePersonnelKey]) saveCurrentToStore(); });
+});
+
+/* INIT */
+renderPro();
+renderPers();
+renderList();
+</script>
+</body>
+</html>

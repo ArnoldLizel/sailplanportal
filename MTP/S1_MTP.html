@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unit Measure & Target Profile – Navy 2028</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Barlow+Condensed:wght@300;400;600;700&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg-deep:       #08041a;
+      --bg-card:       #100726;
+      --bg-panel:      #180d35;
+      --bg-header:     #200e45;
+      --bg-input:      #1a0f38;
+      --accent-purple: #7c3aed;
+      --accent-purple2:#9d5af0;
+      --accent-pink:   #e91e8c;
+      --accent-gold:   #f5c518;
+      --accent-gold2:  #ffd740;
+      --accent-blue:   #1a6fd4;
+      --text-primary:  #f0e8ff;
+      --text-secondary:#b39ddb;
+      --text-muted:    #7c6fa0;
+      --border:        #2d1a60;
+      --border-bright: #5a22cc;
+      --row-alt:       #140830;
+      --glow-purple:   rgba(124,58,237,0.3);
+      --glow-pink:     rgba(233,30,140,0.2);
+      --glow-gold:     rgba(245,197,24,0.25);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-deep);
+      font-family: 'Exo 2', sans-serif;
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 24px 28px 40px;
+      background-image:
+        radial-gradient(ellipse at 8% 15%, rgba(124,58,237,0.18) 0%, transparent 45%),
+        radial-gradient(ellipse at 92% 85%, rgba(233,30,140,0.12) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 50%, rgba(10,4,30,0.8) 0%, transparent 100%);
+    }
+
+    /* ── TOAST ─────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      top: 24px; right: 28px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      padding: 12px 22px;
+      border-radius: 4px;
+      box-shadow: 0 4px 24px rgba(124,58,237,0.5);
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── PAGE HEADER ─────────────────────────────── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border-bright);
+    }
+
+    .header-left { display: flex; align-items: center; gap: 18px; }
+
+    .page-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 2.1rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-shadow: 0 0 20px var(--glow-purple);
+    }
+    .page-title span { color: var(--accent-gold); }
+
+    .navy-badge { text-align: right; }
+    .navy-year {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 2rem;
+      letter-spacing: 4px;
+      color: var(--text-primary);
+      display: flex; align-items: center; gap: 10px; justify-content: flex-end;
+    }
+    .navy-year .star { color: var(--accent-gold); font-size: 1.5rem; }
+    .tagline {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 4px;
+      color: var(--accent-pink);
+      text-transform: uppercase;
+      text-align: right;
+      margin-top: 2px;
+    }
+
+    /* ── MAIN CARD ───────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 8px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(124,58,237,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    /* ── SECTION ROWS ────────────────────────────── */
+    .row {
+      display: grid;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Label style */
+    .lbl {
+      background: var(--bg-header);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      border-right: 1px solid var(--border);
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+
+    /* Editable input / select base */
+    .edit-input, .edit-select, .edit-textarea {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.875rem;
+      width: 100%;
+      padding: 0;
+    }
+    .edit-input:focus, .edit-select:focus, .edit-textarea:focus {
+      color: #fff;
+    }
+    .edit-select option { background: #200e45; color: var(--text-primary); }
+
+    /* Editable cell wrapper */
+    .val {
+      background: var(--bg-panel);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      border-right: 1px solid var(--border);
+      cursor: text;
+      transition: background 0.15s;
+    }
+    .val:hover { background: #210f44; }
+    .val:focus-within { background: #260e4d; box-shadow: inset 0 0 0 1px var(--accent-purple); }
+
+    /* Measure name — gold highlight */
+    .measure-val {
+      background: linear-gradient(90deg, #f5a800, var(--accent-gold2));
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      border-right: 1px solid rgba(0,0,0,0.2);
+    }
+    .measure-val .edit-input {
+      color: #1a0800;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+    }
+    .measure-val .edit-input::placeholder { color: rgba(26,8,0,0.5); }
+
+    /* Objective highlight */
+    .obj-val {
+      background: linear-gradient(90deg, #c47200, #f5a800);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-right: 1px solid rgba(0,0,0,0.15);
+    }
+    .obj-val .edit-select {
+      color: #fff;
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      flex: 1;
+      cursor: pointer;
+    }
+    .obj-val .edit-select option { background: #200e45; color: var(--text-primary); }
+
+    /* ── ROW 1: Objective + Update ──────────────── */
+    .row-1 { grid-template-columns: minmax(160px,200px) 1fr minmax(160px,220px) minmax(110px,140px); }
+
+    /* ── ROW 2: Measure + Unit ───────────────────── */
+    .row-2 { grid-template-columns: minmax(160px,200px) 1fr minmax(160px,220px) minmax(110px,140px); }
+
+    /* ── ROW 3: Reason ───────────────────────────── */
+    .row-3 { grid-template-columns: minmax(160px,200px) 1fr; }
+
+    /* ── DIVIDER ─────────────────────────────────── */
+    .accent-divider {
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), transparent);
+      border: none;
+    }
+
+    /* ── FORMULA SECTION ─────────────────────────── */
+    .formula-section {
+      display: grid;
+      grid-template-columns: 1fr 170px 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+    .formula-block {
+      padding: 0;
+      border-right: 1px solid var(--border);
+    }
+    .formula-hdr {
+      background: var(--bg-header);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .formula-body {
+      padding: 14px;
+      background: var(--bg-panel);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.05rem;
+      letter-spacing: 0.5px;
+      min-height: 60px;
+      display: flex; align-items: center;
+    }
+    .formula-body .edit-input {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.05rem;
+      letter-spacing: 0.5px;
+    }
+    .data-col {
+      border-right: 1px solid var(--border);
+    }
+    .data-row {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+    .data-row:last-child { border-bottom: none; }
+    .data-row .lbl { width: 170px; min-height: 48px; }
+    .data-row .val { flex: 1; min-height: 48px; }
+
+    /* ── AVAILABILITY + TARGET ───────────────────── */
+    .avail-target-section {
+      display: grid;
+      grid-template-columns: 220px 140px 60px repeat(9, 1fr);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-hdr {
+      background: var(--bg-header);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      padding: 10px 14px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+    }
+
+    .tgt-hdr {
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink));
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+      text-align: center;
+      padding: 10px 6px;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .baseline-hdr {
+      background: var(--bg-header);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.65rem;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      text-align: center;
+      padding: 6px 4px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .tgt-year {
+      background: var(--bg-header);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      text-align: center;
+      padding: 8px 4px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Availability options */
+    .avail-options {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .avail-opt {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.15s;
+    }
+    .avail-opt:last-child { border-bottom: none; flex: 1; }
+    .avail-opt:hover { background: var(--row-alt); }
+    .avail-opt.selected {
+      background: var(--row-alt);
+      color: var(--text-primary);
+      border-left: 3px solid var(--accent-blue);
+    }
+    .avail-dot {
+      width: 14px; height: 14px;
+      border-radius: 2px;
+      background: var(--bg-header);
+      border: 1px solid var(--border-bright);
+      flex-shrink: 0;
+    }
+    .avail-opt.selected .avail-dot {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 8px rgba(26,111,212,0.6);
+    }
+
+    .when-val {
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    .when-val .val {
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .baseline-cell {
+      background: var(--row-alt);
+      border-right: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text-primary);
+    }
+    .baseline-cell .edit-input {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      text-align: center;
+      color: var(--text-primary);
+    }
+
+    .tgt-val-cell {
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text-primary);
+      transition: background 0.15s;
+    }
+    .tgt-val-cell:hover { background: #210f44; }
+    .tgt-val-cell:focus-within { background: #260e4d; box-shadow: inset 0 0 0 1px var(--accent-purple); }
+    .tgt-val-cell .edit-input {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      text-align: center;
+      color: var(--text-primary);
+    }
+
+    /* ── BOTTOM SECTION ──────────────────────────── */
+    .bottom-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .bottom-panel {
+      padding: 0;
+      border-right: 1px solid var(--border);
+    }
+    .bottom-panel:last-child { border-right: none; }
+    .bottom-lbl {
+      background: var(--bg-header);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .bottom-body {
+      background: var(--bg-panel);
+      padding: 14px;
+      font-size: 0.875rem;
+      min-height: 70px;
+      display: flex; align-items: flex-start;
+      transition: background 0.15s;
+      cursor: text;
+    }
+    .bottom-body:hover { background: #210f44; }
+    .bottom-body:focus-within { background: #260e4d; box-shadow: inset 0 0 0 1px var(--accent-purple); }
+    .bottom-body .edit-textarea {
+      resize: none;
+      min-height: 50px;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    /* ── OBJECTIVE BAR ───────────────────────────── */
+    .obj-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-header);
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .obj-bar-lbl {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    /* ── BUTTONS ─────────────────────────────────── */
+    .btn {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 3px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-save {
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink));
+      color: #fff;
+      box-shadow: 0 2px 12px var(--glow-purple);
+    }
+    .btn-save:hover { opacity: 0.88; box-shadow: 0 4px 18px var(--glow-purple); transform: translateY(-1px); }
+    .btn-add {
+      background: transparent;
+      color: var(--accent-gold);
+      border: 1px solid var(--accent-gold);
+    }
+    .btn-add:hover { background: rgba(245,197,24,0.08); }
+    .btn-del {
+      background: transparent;
+      color: var(--accent-pink);
+      border: 1px solid var(--accent-pink);
+      padding: 6px 10px;
+    }
+    .btn-del:hover { background: rgba(233,30,140,0.08); }
+
+    /* ── ADD OBJECTIVE MODAL ─────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(8,4,26,0.85);
+      z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-bright);
+      border-radius: 8px;
+      padding: 28px;
+      width: 420px;
+      box-shadow: 0 20px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(124,58,237,0.2);
+    }
+    .modal h2 {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      margin-bottom: 18px;
+    }
+    .modal input[type="text"] {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .modal input[type="text"]:focus { border-color: var(--accent-purple); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-confirm {
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink));
+      color: #fff;
+      box-shadow: 0 2px 12px var(--glow-purple);
+    }
+    .btn-cancel {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-bright);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .page-title { font-size: 1.4rem; }
+      body { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast">✦ Data Saved Successfully</div>
+
+<!-- ADD OBJECTIVE MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Add New Objective</h2>
+    <input type="text" id="newObjInput" placeholder="Enter objective name…" />
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-confirm" onclick="confirmAddObj()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="header-left">
+    <div class="page-title" style="font-size:1.5rem;">Personnel Branch<br><span style="font-size:1.1rem;letter-spacing:2px;opacity:0.85;">Measure &amp; Target Profile</span></div>
+  </div>
+  <div class="navy-badge">
+    <div class="navy-year">NAVY <span class="star">✦</span> 2028</div>
+    <div class="tagline">Modern &amp; Multi-Capable</div>
+  </div>
+</div>
+
+<!-- MAIN CARD -->
+<div class="card" id="mainCard">
+
+  <!-- OBJECTIVE BAR -->
+  <div class="obj-bar">
+    <span class="obj-bar-lbl">Objective</span>
+    <select class="edit-select" id="objectiveSelect" onchange="switchObjective(this.value)" style="max-width:360px; background:transparent; border:1px solid var(--border-bright); border-radius:3px; padding:4px 10px; color:var(--accent-gold2); font-weight:700; font-size:0.9rem;">
+    </select>
+    <button class="btn btn-add" onclick="openModal()">+ Add Objective</button>
+    <button class="btn btn-del" onclick="deleteCurrentObjective()" title="Delete current objective">✕ Delete</button>
+    <button class="btn btn-save" onclick="saveData()">💾 Save</button>
+  </div>
+
+  <!-- ROW 1: What is the objective / Update frequency -->
+  <div class="row row-1">
+    <div class="lbl">What is the objective?</div>
+    <div class="obj-val" style="grid-column:span 1; display:flex; align-items:center; flex:1;">
+      <span id="objDisplay" style="color:#fff; font-family:'Exo 2',sans-serif; font-weight:600; font-size:0.9rem;"></span>
+    </div>
+    <div class="lbl" style="text-align:center; justify-content:center; white-space:normal; line-height:1.3;">How often is the measure updated / calculated?</div>
+    <div class="val" style="justify-content:center; text-align:center;">
+      <input class="edit-input" id="f_updateFreq" placeholder="e.g. Quarterly" />
+    </div>
+  </div>
+
+  <!-- ROW 2: Measure name / Unit -->
+  <div class="row row-2">
+    <div class="lbl">What is the measure?</div>
+    <div class="measure-val">
+      <input class="edit-input" id="f_measure" placeholder="Enter measure name…" />
+    </div>
+    <div class="lbl" style="text-align:center; justify-content:center;">What is the unit of measure used?</div>
+    <div class="val" style="justify-content:center; text-align:center;">
+      <input class="edit-input" id="f_unit" placeholder="e.g. Percentage" />
+    </div>
+  </div>
+
+  <!-- ROW 3: Reason -->
+  <div class="row row-3">
+    <div class="lbl" style="white-space:normal; line-height:1.4;">What is the reason behind choosing this measure?</div>
+    <div class="val">
+      <input class="edit-input" id="f_reason" placeholder="Enter reason…" />
+    </div>
+  </div>
+
+  <hr class="accent-divider"/>
+
+  <!-- FORMULA SECTION -->
+  <div class="formula-section">
+    <div class="formula-block">
+      <div class="formula-hdr">How is the measure calculated? Clarify the terms in the formula.</div>
+      <div class="formula-body">
+        <input class="edit-input" id="f_formula" placeholder="e.g. Measure = PSGR (50%) + Qualification Rating (50%)" />
+      </div>
+    </div>
+    <div class="data-col" style="display:flex; flex-direction:column;">
+      <div class="data-row">
+        <div class="lbl" style="width:170px; white-space:normal; line-height:1.3;">What data are required in calculating the measure?</div>
+      </div>
+      <div class="data-row" style="flex:1;">
+        <div class="val" style="flex:1; min-height:48px;">
+          <input class="edit-input" id="f_dataRequired" placeholder="Enter data required…" />
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column;">
+      <div class="data-row">
+        <div class="lbl" style="white-space:normal; line-height:1.3;">Where / how is it acquired?</div>
+      </div>
+      <div class="data-row" style="flex:1;">
+        <div class="val" style="min-height:48px;">
+          <input class="edit-input" id="f_dataSource" placeholder="e.g. Office S1" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="accent-divider"/>
+
+  <!-- AVAILABILITY + TARGET SECTION -->
+  <!-- Header row -->
+  <div style="display:grid; grid-template-columns: 220px 140px 60px repeat(9,1fr); border-bottom:1px solid var(--border);">
+    <div class="section-hdr">Is information about the measure available?</div>
+    <div class="section-hdr">When will this information be available?</div>
+    <div class="baseline-hdr">Base-<br>line</div>
+    <div class="tgt-hdr" style="grid-column:span 9;">TARGET</div>
+  </div>
+  <!-- Sub-header: year labels -->
+  <div style="display:grid; grid-template-columns: 220px 140px 60px repeat(9,1fr); border-bottom:1px solid var(--border);">
+    <!-- Availability options (rowspan 2 simulated) -->
+    <div class="avail-options" id="availOptions">
+      <div class="avail-opt" data-val="currently" onclick="selectAvail(this)">
+        <div class="avail-dot"></div>Currently available
+      </div>
+      <div class="avail-opt selected" data-val="minor" onclick="selectAvail(this)">
+        <div class="avail-dot"></div>Available with minor changes
+      </div>
+      <div class="avail-opt" data-val="formulated" onclick="selectAvail(this)">
+        <div class="avail-dot"></div>Still to be formulated
+      </div>
+    </div>
+    <!-- When available -->
+    <div class="val" style="justify-content:center; text-align:center;">
+      <input class="edit-input" id="f_whenAvail" placeholder="e.g. Quarterly" style="text-align:center;" />
+    </div>
+    <!-- Baseline value -->
+    <div class="baseline-cell">
+      <input class="edit-input" id="f_baseline" placeholder="–" style="text-align:center; width:56px;" />
+    </div>
+    <!-- Year columns -->
+    <div class="tgt-year">2021</div>
+    <div class="tgt-year">2022</div>
+    <div class="tgt-year">2023</div>
+    <div class="tgt-year">2024</div>
+    <div class="tgt-year">2025</div>
+    <div class="tgt-year">2026</div>
+    <div class="tgt-year">2027</div>
+    <div class="tgt-year">2028</div>
+    <div class="tgt-year">2029</div>
+  </div>
+  <!-- Values row -->
+  <div style="display:grid; grid-template-columns: 220px 140px 60px repeat(9,1fr); border-bottom:1px solid var(--border); min-height:52px;">
+    <div style="background:var(--bg-deep); border-right:1px solid var(--border);"></div>
+    <div style="background:var(--bg-deep); border-right:1px solid var(--border);"></div>
+    <div class="tgt-val-cell" style="background:var(--row-alt);">
+      <input class="edit-input" id="t_base" placeholder="–" style="text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem;" />
+    </div>
+    <div class="tgt-val-cell"><input class="edit-input tgt-yr-input" data-yr="2021" id="t_2021" placeholder="–" style="text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem;" /></div>
+    <div class="tgt-val-cell"><input class="edit-input tgt-yr-input" data-yr="2022" id="t_2022" placeholder="–" style="text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem;" /></div>
+    <div class="tgt-val-cell"><input class="edit-input tgt-yr-input" data-yr="2023" id="t_2023" placeholder="–" style="text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem;" /></div>
+    <div class="tgt-val-cell"><input class="edit-input tgt-yr-input" data-yr="2024" id="t_2024" placeholder="–" style="text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem;" /></div>
+    <div class="tgt-val-cell"><input class="edit-input tgt-yr-input" data-yr="2025" id="t_2025" placeholder="–" style="text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem;" /></div>
+    <div class="tgt-val-cell"><input class="edit-input tgt-yr-input" data-yr="2026" id="t_2026" placeholder="–" style="text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem;" /></div>
+    <div class="tgt-val-cell"><input class="edit-input tgt-yr-input" data-yr="2027" id="t_2027" placeholder="–" style="text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem;" /></div>
+    <div class="tgt-val-cell"><input class="edit-input tgt-yr-input" data-yr="2028" id="t_2028" placeholder="–" style="text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem;" /></div>
+    <div class="tgt-val-cell"><input class="edit-input tgt-yr-input" data-yr="2029" id="t_2029" placeholder="–" style="text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem;" /></div>
+  </div>
+
+  <hr class="accent-divider"/>
+
+  <!-- BOTTOM SECTION -->
+  <div class="bottom-section">
+    <div class="bottom-panel">
+      <div class="bottom-lbl">Responsible for Setting Targets</div>
+      <div class="bottom-body">
+        <textarea class="edit-input edit-textarea" id="f_responsible" placeholder="Enter responsible party…" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="bottom-panel">
+      <div class="bottom-lbl">Basis for Setting the Targets</div>
+      <div class="bottom-body">
+        <textarea class="edit-input edit-textarea" id="f_basis" placeholder="Enter basis…" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="bottom-panel">
+      <div class="bottom-lbl">Accountable Party</div>
+      <div class="bottom-body">
+        <textarea class="edit-input edit-textarea" id="f_accountable" placeholder="Enter accountable party…" rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── DATA STORE ──────────────────────────────────────
+  const YEARS = ['2021','2022','2023','2024','2025','2026','2027','2028','2029'];
+
+  // objectives: array of { name, data }
+  let objectives = [];
+  let currentObj = 0;
+
+  function blankData() {
+    const d = {
+      updateFreq: '',
+      measure: '',
+      unit: '',
+      reason: '',
+      formula: '',
+      dataRequired: '',
+      dataSource: '',
+      whenAvail: '',
+      availability: 'minor',
+      baseline: '',
+      baseTarget: '',
+      targets: {},
+      responsible: '',
+      basis: '',
+      accountable: ''
+    };
+    YEARS.forEach(y => d.targets[y] = '');
+    return d;
+  }
+
+  // ── MODAL ────────────────────────────────────────────
+  function openModal() {
+    document.getElementById('newObjInput').value = '';
+    document.getElementById('modal').classList.add('open');
+    setTimeout(() => document.getElementById('newObjInput').focus(), 100);
+  }
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+  document.getElementById('newObjInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') confirmAddObj();
+    if (e.key === 'Escape') closeModal();
+  });
+
+  function confirmAddObj() {
+    const name = document.getElementById('newObjInput').value.trim();
+    if (!name) return;
+    objectives.push({ name, data: blankData() });
+    currentObj = objectives.length - 1;
+    renderSelect();
+    renderForm();
+    closeModal();
+  }
+
+  // ── SELECT ───────────────────────────────────────────
+  function renderSelect() {
+    const sel = document.getElementById('objectiveSelect');
+    sel.innerHTML = '';
+    objectives.forEach((obj, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = obj.name;
+      if (i === currentObj) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function switchObjective(idx) {
+    currentObj = parseInt(idx);
+    renderForm();
+  }
+
+  function deleteCurrentObjective() {
+    if (objectives.length <= 1) {
+      showToast('⚠ Cannot delete the last objective');
+      return;
+    }
+    objectives.splice(currentObj, 1);
+    currentObj = Math.max(0, currentObj - 1);
+    renderSelect();
+    renderForm();
+  }
+
+  // ── FORM RENDER ──────────────────────────────────────
+  function renderForm() {
+    const obj = objectives[currentObj];
+    const d = obj.data;
+    document.getElementById('objDisplay').textContent = obj.name;
+    document.getElementById('f_updateFreq').value = d.updateFreq;
+    document.getElementById('f_measure').value = d.measure;
+    document.getElementById('f_unit').value = d.unit;
+    document.getElementById('f_reason').value = d.reason;
+    document.getElementById('f_formula').value = d.formula;
+    document.getElementById('f_dataRequired').value = d.dataRequired;
+    document.getElementById('f_dataSource').value = d.dataSource;
+    document.getElementById('f_whenAvail').value = d.whenAvail;
+    document.getElementById('f_baseline').value = d.baseline;
+    document.getElementById('t_base').value = d.baseTarget;
+    YEARS.forEach(y => {
+      document.getElementById('t_' + y).value = d.targets[y] || '';
+    });
+    document.getElementById('f_responsible').value = d.responsible;
+    document.getElementById('f_basis').value = d.basis;
+    document.getElementById('f_accountable').value = d.accountable;
+
+    // Availability
+    document.querySelectorAll('.avail-opt').forEach(el => {
+      el.classList.toggle('selected', el.dataset.val === d.availability);
+    });
+  }
+
+  // ── COLLECT FORM DATA ────────────────────────────────
+  function collectForm() {
+    const obj = objectives[currentObj];
+    const d = obj.data;
+    d.updateFreq   = document.getElementById('f_updateFreq').value;
+    d.measure      = document.getElementById('f_measure').value;
+    d.unit         = document.getElementById('f_unit').value;
+    d.reason       = document.getElementById('f_reason').value;
+    d.formula      = document.getElementById('f_formula').value;
+    d.dataRequired = document.getElementById('f_dataRequired').value;
+    d.dataSource   = document.getElementById('f_dataSource').value;
+    d.whenAvail    = document.getElementById('f_whenAvail').value;
+    d.baseline     = document.getElementById('f_baseline').value;
+    d.baseTarget   = document.getElementById('t_base').value;
+    YEARS.forEach(y => { d.targets[y] = document.getElementById('t_' + y).value; });
+    d.responsible  = document.getElementById('f_responsible').value;
+    d.basis        = document.getElementById('f_basis').value;
+    d.accountable  = document.getElementById('f_accountable').value;
+    // availability already updated via click
+  }
+
+  // ── AVAILABILITY CLICK ───────────────────────────────
+  function selectAvail(el) {
+    document.querySelectorAll('.avail-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    objectives[currentObj].data.availability = el.dataset.val;
+  }
+
+  // ── SAVE ─────────────────────────────────────────────
+  function saveData() {
+    collectForm();
+    // Persist to localStorage
+    try {
+      localStorage.setItem('navyMTP_objectives', JSON.stringify(objectives));
+      localStorage.setItem('navyMTP_current', currentObj);
+    } catch(e) {}
+    showToast('✦ Data Saved Successfully');
+  }
+
+  // ── TOAST ────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── INIT ─────────────────────────────────────────────
+  function init() {
+    // Try restore from localStorage
+    try {
+      const saved = localStorage.getItem('navyMTP_objectives');
+      const savedIdx = localStorage.getItem('navyMTP_current');
+      if (saved) {
+        objectives = JSON.parse(saved);
+        currentObj = parseInt(savedIdx) || 0;
+      }
+    } catch(e) {}
+
+    // Seed default if empty
+    if (!objectives.length) {
+      const d = blankData();
+      d.updateFreq = 'Quarterly';
+      d.measure = 'AFPJRRS HPN & HSG Personnel Readiness';
+      d.unit = 'Percentage';
+      d.reason = 'FOIC, PN BSC alignment measure';
+      d.formula = 'Measure = PSGR (50%) + Qualification Rating (50%)';
+      d.dataRequired = 'AFP JRRS personnel readiness';
+      d.dataSource = 'Office S1';
+      d.whenAvail = 'Quarterly';
+      d.baseline = '70%';
+      d.baseTarget = '70%';
+      d.targets = { '2021':'70%','2022':'70%','2023':'70%','2024':'73%','2025':'75%','2026':'77%','2027':'80%','2028':'82%','2029':'83%' };
+      d.responsible = 'The Commander, HPN & HSG as per recommendations from Office S1';
+      d.basis = 'Office S1';
+      d.accountable = 'Office S1';
+      objectives.push({ name: 'Provide Sufficient and Qualified (S1)', data: d });
+    }
+
+    renderSelect();
+    renderForm();
+  }
+
+  init();
+</script>
+</body>
+</html>

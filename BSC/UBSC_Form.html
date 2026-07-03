@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HPN & HSG Balanced Scorecard 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cyan:#00e5ff;
+  --cyan-dim:#00bcd4;
+  --gold:#ffd600;
+  --bg-deep:#050d1a;
+  --bg-panel:#070f1f;
+  --bg-cell:#0a1628;
+  --bg-cell2:#0d1e35;
+  --border:#1a3a5c;
+  --border-bright:#00bcd4;
+  --text-main:#cce8f4;
+  --text-dim:#7aafc8;
+  --text-bright:#f0faff;
+  --accent-green:#00ff9d;
+  --accent-pink:#ff4081;
+  --accent-orange:#ff9800;
+}
+html,body{
+  font-family:'Rajdhani',sans-serif;
+  background:var(--bg-deep);
+  color:var(--text-main);
+  min-height:100vh;
+  font-size:16px;
+  line-height:1.2;
+}
+
+.main{padding:10px 14px 24px;}
+
+/* TOOLBAR */
+.toolbar{
+  display:flex;align-items:center;gap:8px;margin-bottom:10px;
+  padding:8px 12px;
+  background:var(--bg-panel);
+  border:1px solid var(--border);
+  border-top:2px solid var(--cyan);
+}
+.toolbar-title{
+  font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;
+  color:var(--cyan);letter-spacing:1px;flex:1;
+}
+.toolbar-sub{font-size:12px;color:var(--text-dim);letter-spacing:2px;margin-top:1px;}
+.sync-pill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(0,255,100,0.08);border:1px solid rgba(0,255,100,0.25);
+  padding:4px 12px;border-radius:20px;font-size:13px;color:#00ff9d;
+  font-family:'Share Tech Mono',monospace;letter-spacing:1px;
+}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#00ff9d;box-shadow:0 0 6px #00ff9d;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.btn-sm{
+  padding:5px 14px;font-size:13px;font-weight:700;letter-spacing:1px;
+  cursor:pointer;border-radius:2px;font-family:'Rajdhani',sans-serif;
+  border:1px solid var(--border);color:var(--text-dim);background:var(--bg-panel);
+  transition:all .2s;white-space:nowrap;
+}
+.btn-sm:hover{border-color:var(--cyan-dim);color:var(--cyan-dim);}
+.btn-sm.primary{border-color:var(--accent-pink);color:var(--accent-pink);background:rgba(255,64,129,0.08);}
+.btn-sm.primary:hover{background:rgba(255,64,129,0.15);}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border:1px solid var(--border-bright);box-shadow:0 0 24px rgba(0,180,255,0.1);}
+table{border-collapse:collapse;width:100%;font-family:'Rajdhani',sans-serif;background:var(--bg-panel);table-layout:fixed;}
+
+thead th{
+  background:linear-gradient(180deg,#071e38,#041428);
+  color:var(--cyan);font-size:13px;font-weight:700;letter-spacing:1.2px;
+  text-transform:uppercase;padding:7px 5px;
+  border:1px solid var(--border);text-align:center;white-space:nowrap;
+}
+thead th.span-main{
+  background:linear-gradient(180deg,#051a30,#030e1e);
+  color:var(--cyan-dim);border-bottom:2px solid var(--cyan);font-size:14px;
+}
+thead th.year-th{color:#00ff9d !important;font-size:14px !important;border-bottom:1px solid #00ff9d !important;}
+thead th.q-th{color:#90caf9 !important;font-size:13px !important;}
+
+/* All body cells — tight padding, no extra height */
+tbody td{
+  padding:5px 8px;
+  border:1px solid #0e2640;
+  color:var(--text-main);
+  vertical-align:middle;
+  background:var(--bg-cell);
+  line-height:1.25;
+}
+tbody tr:nth-child(even) td{background:var(--bg-cell2);}
+tbody tr:hover td{background:rgba(0,180,255,0.04);}
+
+/* perspective col */
+.pers-cell{
+  background:linear-gradient(180deg,#031020,#051828) !important;
+  font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;
+  text-align:center;writing-mode:vertical-rl;transform:rotate(180deg);
+  width:34px !important;min-width:34px !important;max-width:34px !important;
+  border-left:2px solid var(--cyan) !important;
+  border-right:1px solid var(--border) !important;
+  padding:6px 0 !important;
+  text-transform:uppercase;color:var(--cyan) !important;
+}
+
+/* objectives */
+.obj-cell{
+  font-size:15px;font-weight:700;color:var(--text-bright);
+  width:200px;min-width:180px;max-width:210px;
+  line-height:1.3;padding:5px 9px !important;
+  word-wrap:break-word;
+}
+/* measures */
+.meas-cell{
+  font-size:15px;font-weight:500;color:var(--text-main);
+  width:200px;min-width:180px;max-width:210px;
+  line-height:1.3;padding:5px 9px !important;
+  word-wrap:break-word;
+}
+
+/* historical data */
+.hist-cell{
+  text-align:center;font-family:'Share Tech Mono',monospace;
+  font-size:15px;font-weight:600;color:#7aafc8;
+  background:#040d18 !important;
+  width:54px;min-width:50px;
+  padding:5px 4px !important;
+}
+
+/* Q input cells */
+.q-input-cell{
+  text-align:center;
+  padding:3px 2px !important;
+  width:50px;min-width:46px;max-width:56px;
+}
+.q-input-cell input{
+  width:44px;
+  background:rgba(0,100,180,0.18);
+  border:1px solid #1a3a5c;
+  color:var(--cyan);
+  font-family:'Share Tech Mono',monospace;
+  font-size:14px;
+  text-align:center;
+  padding:3px 2px;
+  border-radius:1px;
+  transition:all .2s;
+  display:block;
+  margin:0 auto;
+}
+.q-input-cell input:focus{
+  outline:none;border-color:var(--cyan);
+  background:rgba(0,200,255,0.15);
+  box-shadow:0 0 6px rgba(0,229,255,0.2);
+}
+.q-input-cell input.saved{border-color:#00ff9d;background:rgba(0,255,100,0.08);}
+
+/* target cols */
+.target-cell{
+  text-align:center;font-family:'Share Tech Mono',monospace;
+  font-size:15px;font-weight:700;color:var(--accent-pink);
+  background:rgba(255,64,129,0.07) !important;
+  border:1px solid rgba(255,64,129,0.18) !important;
+  width:54px;min-width:50px;
+  padding:5px 4px !important;
+}
+.target27-cell{
+  text-align:center;font-family:'Share Tech Mono',monospace;
+  font-size:15px;font-weight:700;color:var(--accent-orange);
+  background:rgba(255,152,0,0.07) !important;
+  border:1px solid rgba(255,152,0,0.18) !important;
+  width:54px;min-width:50px;
+  padding:5px 4px !important;
+}
+
+/* initiatives */
+.init-cell{
+  font-size:14px;font-weight:500;color:var(--text-dim);
+  width:170px;min-width:150px;max-width:185px;
+  line-height:1.3;padding:5px 8px !important;
+  word-wrap:break-word;
+}
+
+/* SIGNATURES */
+.sig-section{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;
+  padding:16px;background:var(--bg-panel);
+  border-top:1px solid var(--border-bright);
+}
+.sig-block{
+  border:1px solid var(--border);background:var(--bg-cell);
+  padding:14px;text-align:center;position:relative;
+}
+.sig-block::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+}
+.sig-label{
+  font-size:14px;font-weight:700;color:var(--cyan);letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:10px;display:block;
+  font-family:'Orbitron',sans-serif;
+}
+.sig-upload{
+  width:180px;height:64px;margin:0 auto 10px;
+  border:1px dashed #1a3a5c;background:rgba(0,50,100,0.3);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  overflow:hidden;transition:all .2s;
+}
+.sig-upload:hover{border-color:var(--cyan-dim);background:rgba(0,200,255,0.08);}
+.sig-ph{font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;}
+.sig-name{
+  font-family:'Orbitron',sans-serif;font-size:12px;font-weight:600;
+  color:var(--text-bright);text-decoration:underline;text-underline-offset:3px;
+  text-decoration-color:var(--cyan);margin-top:8px;display:block;
+}
+.sig-role{font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px;display:block;}
+
+@media print{
+  .no-print{display:none !important;}
+  body{background:#050d1a;}
+  .pers-cell{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+<div class="main">
+
+  <!-- TOOLBAR -->
+  <div class="toolbar no-print">
+    <div>
+      <div class="toolbar-title">HPN &amp; HSG BALANCED SCORECARD 2026</div>
+      <div class="toolbar-sub">INTEGRATED STRATEGIC PERFORMANCE MANAGEMENT</div>
+    </div>
+    <div class="sync-pill">
+      <div class="sync-dot"></div>
+      <span id="status-text">CLOUD SYNC ACTIVE</span>
+    </div>
+    <button class="btn-sm" onclick="window.print()">🖨 PRINT</button>
+    <button class="btn-sm primary" onclick="downloadPDF()">⬇ EXPORT PDF</button>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="3" style="width:34px;">PERS</th>
+          <th rowspan="3" style="width:200px;">OBJECTIVES</th>
+          <th rowspan="3" style="width:200px;">MEASURES</th>
+          <th colspan="6" class="span-main">ACTUAL PERFORMANCE</th>
+          <th colspan="2" class="span-main">TARGETS</th>
+          <th rowspan="3" style="width:170px;">INITIATIVES</th>
+        </tr>
+        <tr>
+          <th rowspan="2" class="year-th" style="width:54px;">2024</th>
+          <th rowspan="2" class="year-th" style="width:54px;">2025</th>
+          <th colspan="4" class="year-th">2026</th>
+          <th rowspan="2" class="year-th" style="width:54px;">2026</th>
+          <th rowspan="2" class="year-th" style="width:54px;">2027</th>
+        </tr>
+        <tr>
+          <th class="q-th" style="width:50px;">Q1</th>
+          <th class="q-th" style="width:50px;">Q2</th>
+          <th class="q-th" style="width:50px;">Q3</th>
+          <th class="q-th" style="width:50px;">Q4</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- PERSONNEL -->
+        <tr>
+          <td rowspan="4" class="pers-cell">PERSONNEL</td>
+          <td class="obj-cell">1. Provide Sufficient and Qualified HPN &amp; HSG Personnel (S1)</td>
+          <td class="meas-cell">AFPJRRS HPN &amp; HSG Personnel Readiness (S1)</td>
+          <td class="hist-cell">73%</td><td class="hist-cell">73%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_1_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_1_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_1_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_1_q4" placeholder="—"></td>
+          <td class="target-cell">73%</td><td class="target27-cell">74%</td>
+          <td class="init-cell">1. Prof. &amp; Physical Development Program</td>
+        </tr>
+        <tr>
+          <td class="obj-cell">2. Develop and Sustain Highly Competent Personnel (S1)</td>
+          <td class="meas-cell">HPN &amp; HSG Training Readiness Rating (S1)</td>
+          <td class="hist-cell">95%</td><td class="hist-cell">95%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_2_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_2_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_2_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_2_q4" placeholder="—"></td>
+          <td class="target-cell">95%</td><td class="target27-cell">95%</td>
+          <td class="init-cell">2. Personnel development system</td>
+        </tr>
+        <tr>
+          <td rowspan="2" class="obj-cell">3. Sustain Morally Upright and Motivated Personnel</td>
+          <td class="meas-cell">Compliance to AFP/CSC Rules</td>
+          <td class="hist-cell">98%</td><td class="hist-cell">98%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_3a_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_3a_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_3a_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_3a_q4" placeholder="—"></td>
+          <td class="target-cell">98%</td><td class="target27-cell">98%</td>
+          <td rowspan="2" class="init-cell">3. Morale &amp; Character-Building</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">Leadership/Morale Survey Rating</td>
+          <td class="hist-cell">97%</td><td class="hist-cell">97%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_3b_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_3b_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_3b_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_3b_q4" placeholder="—"></td>
+          <td class="target-cell">97%</td><td class="target27-cell">97%</td>
+        </tr>
+
+        <!-- ORGANIZATION -->
+        <tr>
+          <td class="pers-cell" style="border-left-color:#00ff9d !important;color:#00ff9d !important;">ORGANIZATION</td>
+          <td class="obj-cell">4. Sustain Dynamic Multi-capable HPN &amp; HSG</td>
+          <td class="meas-cell">Table of Organization Fill Up</td>
+          <td class="hist-cell">88%</td><td class="hist-cell">88%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_4_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_4_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_4_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_4_q4" placeholder="—"></td>
+          <td class="target-cell">88%</td><td class="target27-cell">88%</td>
+          <td class="init-cell">4. Responsive Management System</td>
+        </tr>
+
+        <!-- RESOURCES -->
+        <tr>
+          <td rowspan="4" class="pers-cell" style="border-left-color:#ffd600 !important;color:#ffd600 !important;">RESOURCES</td>
+          <td rowspan="4" class="obj-cell">5. Effective Financial Management</td>
+          <td class="meas-cell">HPN &amp; HSG Obligation Rate</td>
+          <td class="hist-cell">100%</td><td class="hist-cell">100%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5a_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5a_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5a_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5a_q4" placeholder="—"></td>
+          <td class="target-cell">100%</td><td class="target27-cell">100%</td>
+          <td rowspan="4" class="init-cell">5. Timely Financial Programs</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">HPN &amp; HSG Disbursement Rate</td>
+          <td class="hist-cell">100%</td><td class="hist-cell">100%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5b_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5b_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5b_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5b_q4" placeholder="—"></td>
+          <td class="target-cell">100%</td><td class="target27-cell">100%</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">Complied Reportorial Requirements</td>
+          <td class="hist-cell">100%</td><td class="hist-cell">100%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5c_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5c_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5c_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5c_q4" placeholder="—"></td>
+          <td class="target-cell">100%</td><td class="target27-cell">100%</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">Implemented Audit Findings</td>
+          <td class="hist-cell">100%</td><td class="hist-cell">100%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5d_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5d_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5d_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_5d_q4" placeholder="—"></td>
+          <td class="target-cell">100%</td><td class="target27-cell">100%</td>
+        </tr>
+
+        <!-- CAPABILITY -->
+        <tr>
+          <td rowspan="2" class="pers-cell" style="border-left-color:#ff9800 !important;color:#ff9800 !important;">CAPABILITY</td>
+          <td rowspan="2" class="obj-cell">6. Sustain Reliable Equipment / Facilities</td>
+          <td class="meas-cell">Equipment Readiness Rating</td>
+          <td class="hist-cell">95%</td><td class="hist-cell">95%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_6a_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_6a_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_6a_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_6a_q4" placeholder="—"></td>
+          <td class="target-cell">95%</td><td class="target27-cell">95%</td>
+          <td rowspan="2" class="init-cell">6. Maintenance Program</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">Facility Readiness Rating</td>
+          <td class="hist-cell">100%</td><td class="hist-cell">100%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_6b_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_6b_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_6b_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_6b_q4" placeholder="—"></td>
+          <td class="target-cell">100%</td><td class="target27-cell">100%</td>
+        </tr>
+
+        <!-- MISSION -->
+        <tr>
+          <td rowspan="9" class="pers-cell" style="border-left-color:#e040fb !important;color:#e040fb !important;">MISSION</td>
+          <td class="obj-cell">7. Operational Readiness (S3)</td>
+          <td class="meas-cell">AFP JRRS Rating</td>
+          <td class="hist-cell">R3</td><td class="hist-cell">R3</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_7_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_7_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_7_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_7_q4" placeholder="—"></td>
+          <td class="target-cell">R1</td><td class="target27-cell">R1</td>
+          <td class="init-cell">7. Unit Operational Readiness</td>
+        </tr>
+        <tr>
+          <td rowspan="7" class="obj-cell">8. Delivery of Mandate</td>
+          <td class="meas-cell">Honors and Ceremonies</td>
+          <td class="hist-cell">52</td><td class="hist-cell">13</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8a_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8a_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8a_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8a_q4" placeholder="—"></td>
+          <td class="target-cell">50</td><td class="target27-cell">50</td>
+          <td rowspan="7" class="init-cell">8. Unit Mission Accomplishment</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">Security Inspection days</td>
+          <td class="hist-cell">365</td><td class="hist-cell">365</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8b_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8b_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8b_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8b_q4" placeholder="—"></td>
+          <td class="target-cell">365</td><td class="target27-cell">365</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">Security Services</td>
+          <td class="hist-cell">41</td><td class="hist-cell">41</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8c_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8c_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8c_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8c_q4" placeholder="—"></td>
+          <td class="target-cell">50</td><td class="target27-cell">50</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">% Operational Dispatches</td>
+          <td class="hist-cell">100%</td><td class="hist-cell">100%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8d_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8d_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8d_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8d_q4" placeholder="—"></td>
+          <td class="target-cell">100%</td><td class="target27-cell">100%</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">Medical Services</td>
+          <td class="hist-cell">100%</td><td class="hist-cell">100%</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8e_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8e_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8e_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8e_q4" placeholder="—"></td>
+          <td class="target-cell">100%</td><td class="target27-cell">100%</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">% Facility Repair</td>
+          <td class="hist-cell">200</td><td class="hist-cell">300</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8f_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8f_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8f_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8f_q4" placeholder="—"></td>
+          <td class="target-cell">230</td><td class="target27-cell">230</td>
+        </tr>
+        <tr>
+          <td class="meas-cell">Recurring Reports</td>
+          <td class="hist-cell">200</td><td class="hist-cell">200</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8g_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8g_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8g_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_8g_q4" placeholder="—"></td>
+          <td class="target-cell">250</td><td class="target27-cell">250</td>
+        </tr>
+        <tr>
+          <td class="obj-cell">9. Stakeholders (IG)</td>
+          <td class="meas-cell">Satisfaction Rating</td>
+          <td class="hist-cell">200</td><td class="hist-cell">100</td>
+          <td class="q-input-cell"><input type="text" data-key="obj_9_q1" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_9_q2" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_9_q3" placeholder="—"></td>
+          <td class="q-input-cell"><input type="text" data-key="obj_9_q4" placeholder="—"></td>
+          <td class="target-cell">230</td><td class="target27-cell">230</td>
+          <td class="init-cell">9. Stakeholder Survey</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SIGNATURES -->
+  <div class="sig-section">
+    <div class="sig-block">
+      <span class="sig-label">PREPARED BY</span>
+      <div class="sig-upload" onclick="document.getElementById('file-1').click()">
+        <span id="ph-1" class="sig-ph">CLICK TO UPLOAD SIGNATURE</span>
+        <img id="img-1" style="display:none;max-height:100%;max-width:100%;object-fit:contain;">
+        <input type="file" id="file-1" style="display:none;" accept="image/*" onchange="handleUpload(this,'sig_1',1)">
+      </div>
+      <span class="sig-name">LT. CDR. KARL LOU A TORIBIO PN</span>
+      <span class="sig-role">ASSISTANT SAIL PLAN OFFICER</span>
+    </div>
+    <div class="sig-block">
+      <span class="sig-label">VERIFIED BY</span>
+      <div class="sig-upload" onclick="document.getElementById('file-2').click()">
+        <span id="ph-2" class="sig-ph">CLICK TO UPLOAD SIGNATURE</span>
+        <img id="img-2" style="display:none;max-height:100%;max-width:100%;object-fit:contain;">
+        <input type="file" id="file-2" style="display:none;" accept="image/*" onchange="handleUpload(this,'sig_2',2)">
+      </div>
+      <span class="sig-name">LT. CDR. ABNER S ANCAYA PN</span>
+      <span class="sig-role">SAIL PLAN OFFICER</span>
+    </div>
+    <div class="sig-block">
+      <span class="sig-label">NOTED BY</span>
+      <div class="sig-upload" onclick="document.getElementById('file-3').click()">
+        <span id="ph-3" class="sig-ph">CLICK TO UPLOAD SIGNATURE</span>
+        <img id="img-3" style="display:none;max-height:100%;max-width:100%;object-fit:contain;">
+        <input type="file" id="file-3b" style="display:none;" accept="image/*" onchange="handleUpload(this,'sig_3',3)">
+      </div>
+      <span class="sig-name">CAPT. OLIVER B REFORBA PN(MNSA)</span>
+      <span class="sig-role">COMMANDER, HPN &amp; HSG</span>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const supabase = createClient(
+  'https://pyciacmxcnktwhpvfdsh.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5Y2lhY214Y25rdHdocHZmZHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMDE4ODIsImV4cCI6MjA4OTg3Nzg4Mn0.B082A3lKWk6g0EH59M-A8sEl2KNyKfZOHYdkkuWmXnc'
+);
+const FORM_ID = 'ubsc_2026';
+const TABLE = 'bsc_data';
+const statusEl = document.getElementById('status-text');
+
+function setStatus(t) { statusEl.textContent = t; }
+
+async function loadData() {
+  setStatus('LOADING…');
+  try {
+    const { data, error } = await supabase
+      .from(TABLE).select('*').eq('form_id', FORM_ID).maybeSingle();
+    if (error) throw error;
+    if (data) {
+      document.querySelectorAll('input[data-key]').forEach(inp => {
+        const k = inp.dataset.key;
+        if (data[k] != null) { inp.value = data[k]; inp.classList.add('saved'); }
+      });
+      [1,2,3].forEach(i => { if (data[`sig_${i}`]) showSig(i, data[`sig_${i}`]); });
+    }
+    setStatus('CLOUD SYNC ACTIVE');
+  } catch(e) { console.error(e); setStatus('LOAD FAILED'); }
+}
+
+async function saveField(k, v) {
+  setStatus('SAVING…');
+  try {
+    const { error } = await supabase
+      .from(TABLE).upsert({ form_id: FORM_ID, [k]: v }, { onConflict: 'form_id' });
+    if (error) throw error;
+    setStatus('SAVED ✓');
+    setTimeout(() => setStatus('CLOUD SYNC ACTIVE'), 1500);
+  } catch(e) { console.error(e); setStatus('SAVE FAILED'); }
+}
+
+const timers = {};
+function debounce(k, fn, d=800){ clearTimeout(timers[k]); timers[k]=setTimeout(fn,d); }
+
+document.querySelectorAll('input[data-key]').forEach(inp => {
+  inp.addEventListener('input', () => {
+    inp.classList.remove('saved');
+    const k = inp.dataset.key;
+    debounce(k, () => saveField(k, inp.value).then(() => inp.classList.add('saved')));
+  });
+});
+
+function showSig(idx, src) {
+  const img = document.getElementById(`img-${idx}`);
+  img.src = src; img.style.display = 'block';
+  document.getElementById(`ph-${idx}`).style.display = 'none';
+}
+
+window.handleUpload = function(input, colKey, idx) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = async e => { showSig(idx, e.target.result); await saveField(colKey, e.target.result); };
+  r.readAsDataURL(f);
+};
+
+window.downloadPDF = function() {
+  html2pdf().from(document.body).set({
+    margin: 0,
+    filename: 'HPN_HSG_BSC_2026.pdf',
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'in', format: 'legal', orientation: 'landscape' }
+  }).save();
+};
+
+loadData();
+</script>
+</body>
+</html>cc

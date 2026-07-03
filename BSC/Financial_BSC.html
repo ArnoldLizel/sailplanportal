@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S10 Financial Management Balanced Scorecard 2026</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --brand-plum:#690754; --brand-raspberry:#880e4f; --brand-accent:#ff4081; --glass-bg:rgba(255,255,255,0.98); }
+        body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#e91e63 0%,#880e4f 50%,#311b92 100%); background-attachment:fixed; padding:20px; min-height:100vh; color:#1e293b; }
+        .container { max-width:1600px; margin:0 auto; background:var(--glass-bg); border-radius:20px; box-shadow:0 30px 60px rgba(0,0,0,.5); overflow:hidden; border:1px solid rgba(255,255,255,.2); position:relative; }
+        #sync-status { position:absolute; top:25px; right:40px; font-size:10px; font-weight:800; padding:6px 14px; border-radius:30px; display:flex; align-items:center; gap:8px; background:white; box-shadow:0 4px 15px rgba(0,0,0,.1); z-index:10; }
+        .status-dot { width:8px; height:8px; border-radius:50%; }
+        .synced { color:#10b981; border:1px solid #10b98133; }
+        .synced .status-dot { background:#10b981; box-shadow:0 0 10px #10b981; }
+        .saving { color:#f59e0b; border:1px solid #f59e0b33; }
+        .saving .status-dot { background:#f59e0b; animation:pulse 1s infinite; }
+        .error { color:#ef4444; border:1px solid #ef444433; }
+        .error .status-dot { background:#ef4444; }
+        @keyframes pulse { 0%{opacity:1}50%{opacity:.3}100%{opacity:1} }
+        .header-section { background:linear-gradient(90deg,var(--brand-plum),var(--brand-raspberry)); padding:25px 40px; display:flex; align-items:center; color:white; border-bottom:4px solid var(--brand-accent); }
+        h1 { font-size:1.7rem; font-weight:800; letter-spacing:-.02em; }
+        .scorecard-table { width:100%; border-collapse:collapse; font-size:.72rem; background:white; }
+        .scorecard-table thead th { background:#f1f5f9; color:var(--brand-plum); padding:12px 6px; text-transform:uppercase; border:1px solid #cbd5e1; font-weight:800; }
+        .scorecard-table td { padding:8px 10px; border:1px solid #e2e8f0; color:#334155; vertical-align:middle; }
+        .perspective-cell { background:linear-gradient(to bottom,var(--brand-plum),var(--brand-raspberry)) !important; color:white !important; font-weight:900; text-align:center; writing-mode:vertical-rl; transform:rotate(180deg); width:42px; font-size:.65rem; letter-spacing:1.5px; }
+        input[type="text"] { width:100%; background:#f8fafc; border:1px solid #e2e8f0; text-align:center; padding:4px; color:var(--brand-plum); border-radius:4px; font-weight:700; transition:all .2s; }
+        input[type="text"]:focus { border-color:var(--brand-accent); background:white; outline:none; box-shadow:0 0 0 3px rgba(255,64,129,.1); }
+        .target-col { font-weight:800; color:var(--brand-raspberry); background:#fff1f2 !important; }
+        .sig-block { padding:20px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; text-align:center; }
+        .sig-upload-box { width:180px; height:75px; margin:0 auto 10px; border:2px dashed #cbd5e1; border-radius:8px; display:flex; align-items:center; justify-content:center; background:white; cursor:pointer; overflow:hidden; }
+        .sig-placeholder { font-size:9px; color:#94a3b8; font-weight:700; text-transform:uppercase; }
+        .name { color:var(--brand-plum); font-weight:800; text-decoration:underline; text-underline-offset:4px; }
+        @media print { .no-print{display:none!important} body{background:white;padding:0} .container{box-shadow:none;border:1px solid #000} .perspective-cell{-webkit-print-color-adjust:exact;} }
+    </style>
+</head>
+<body>
+<div class="container" id="scorecard-area">
+    <div id="sync-status" class="saving">
+        <div class="status-dot"></div>
+        <span id="status-text">Connecting...</span>
+    </div>
+
+    <div class="header-section">
+        <div class="w-11 h-11 bg-white rounded-lg flex items-center justify-center mr-5 shadow-lg">
+            <span class="text-[#880e4f] font-black text-2xl">A</span>
+        </div>
+        <div>
+            <h1>AC of S for Financial Management, S10 &mdash; Balanced Scorecard 2026</h1>
+            <div class="opacity-70 text-[10px] uppercase tracking-[0.3em] font-bold">Integrated Strategic Performance Management</div>
+        </div>
+    </div>
+
+    <div class="p-4 flex gap-3 border-b border-gray-100 bg-gray-50/80 no-print">
+        <button class="bg-white border border-slate-200 text-slate-700 px-5 py-2 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-50 transition-all" onclick="window.print()">Print Report</button>
+        <button class="bg-gradient-to-r from-[#880e4f] to-[#ff4081] text-white px-5 py-2 rounded-lg font-bold text-[10px] uppercase shadow-lg hover:opacity-90 transition-all" onclick="downloadPDF()">Export PDF</button>
+    </div>
+
+    <div class="table-container p-6">
+        <table class="scorecard-table">
+            <thead>
+                <tr>
+                    <th rowspan="3">PERS</th>
+                    <th style="width:210px;" rowspan="3">OBJECTIVES</th>
+                    <th style="width:230px;" rowspan="3">MEASURES</th>
+                    <th colspan="6">ACTUAL PERFORMANCE</th>
+                    <th colspan="2">TARGETS</th>
+                    <th style="width:190px;" rowspan="3">INITIATIVES</th>
+                </tr>
+                <tr>
+                    <th style="width:45px;" rowspan="2">2024</th>
+                    <th style="width:45px;" rowspan="2">2025</th>
+                    <th colspan="4">2026</th>
+                    <th style="width:45px;" rowspan="2">2026</th>
+                    <th style="width:45px;" rowspan="2">2027</th>
+                </tr>
+                <tr><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td rowspan="3" class="perspective-cell">PERSONNEL</td>
+                    <td class="font-bold">1. Provide Sufficient and Qualified S10 Personnel (S10)</td>
+                    <td>AFP JRRS S10 Personnel Readiness Rating</td>
+                    <td class="text-center bg-slate-50 opacity-50">70%</td><td class="text-center bg-slate-50 opacity-50">70%</td>
+                    <td><input type="text" data-row="row_1" data-col="q1"></td>
+                    <td><input type="text" data-row="row_1" data-col="q2"></td>
+                    <td><input type="text" data-row="row_1" data-col="q3"></td>
+                    <td><input type="text" data-row="row_1" data-col="q4"></td>
+                    <td class="text-center target-col">71%</td><td class="text-center target-col">71%</td>
+                    <td class="text-[9px]">1. Implement Professional and Physical Development Programs (S10)</td>
+                </tr>
+                <tr>
+                    <td class="font-bold">2. Develop and Sustain Highly Competent S10 Personnel (S10)</td>
+                    <td>S10 Training Readiness Rating</td>
+                    <td class="text-center bg-slate-50 opacity-50">100%</td><td class="text-center bg-slate-50 opacity-50">100%</td>
+                    <td><input type="text" data-row="row_2" data-col="q1"></td>
+                    <td><input type="text" data-row="row_2" data-col="q2"></td>
+                    <td><input type="text" data-row="row_2" data-col="q3"></td>
+                    <td><input type="text" data-row="row_2" data-col="q4"></td>
+                    <td class="text-center target-col">100%</td><td class="text-center target-col">100%</td>
+                    <td class="text-[9px]">2. Enhance implementation of personnel development system (S10)</td>
+                </tr>
+                <tr>
+                    <td class="font-bold">3. Sustain Morally Upright and Motivated S10 Personnel (S10)</td>
+                    <td>S10 Personnel Compliant to AFP and CSC Rules and Regulations</td>
+                    <td class="text-center bg-slate-50 opacity-50">100%</td><td class="text-center bg-slate-50 opacity-50">100%</td>
+                    <td><input type="text" data-row="row_3" data-col="q1"></td>
+                    <td><input type="text" data-row="row_3" data-col="q2"></td>
+                    <td><input type="text" data-row="row_3" data-col="q3"></td>
+                    <td><input type="text" data-row="row_3" data-col="q4"></td>
+                    <td class="text-center target-col">98%</td><td class="text-center target-col">98%</td>
+                    <td class="text-[9px]">3. Implement Moral and Character-Building Program (S10)</td>
+                </tr>
+                <tr>
+                    <td class="perspective-cell">ORGANIZATION</td>
+                    <td class="font-bold">4. Sustain a Dynamic and Responsive Multi-capable S10, HPN &amp; HSG (S10)</td>
+                    <td>S10 TO Fill Up</td>
+                    <td class="text-center bg-slate-50 opacity-50">91%</td><td class="text-center bg-slate-50 opacity-50">91%</td>
+                    <td><input type="text" data-row="row_4" data-col="q1"></td>
+                    <td><input type="text" data-row="row_4" data-col="q2"></td>
+                    <td><input type="text" data-row="row_4" data-col="q3"></td>
+                    <td><input type="text" data-row="row_4" data-col="q4"></td>
+                    <td class="text-center target-col">91%</td><td class="text-center target-col">91%</td>
+                    <td class="text-[9px]">4. Establish Responsive HPN &amp; HSG Management System (S10)</td>
+                </tr>
+                <tr>
+                    <td rowspan="3" class="perspective-cell">RESOURCES</td>
+                    <td rowspan="3" class="font-bold">5. Implement Effective and Efficient Financial Management (S10)</td>
+                    <td>Obligation Rate</td>
+                    <td class="text-center bg-slate-50 opacity-50">82%</td><td class="text-center bg-slate-50 opacity-50">82%</td>
+                    <td><input type="text" data-row="row_5a" data-col="q1"></td>
+                    <td><input type="text" data-row="row_5a" data-col="q2"></td>
+                    <td><input type="text" data-row="row_5a" data-col="q3"></td>
+                    <td><input type="text" data-row="row_5a" data-col="q4"></td>
+                    <td class="text-center target-col">82%</td><td class="text-center target-col">82%</td>
+                    <td rowspan="3" class="text-[9px]">5. Ensure Timely and Judicious Implementation of Financial Programs (S10)</td>
+                </tr>
+                <tr>
+                    <td>Disbursement Rate</td>
+                    <td class="text-center bg-slate-50 opacity-50">75%</td><td class="text-center bg-slate-50 opacity-50">75%</td>
+                    <td><input type="text" data-row="row_5b" data-col="q1"></td>
+                    <td><input type="text" data-row="row_5b" data-col="q2"></td>
+                    <td><input type="text" data-row="row_5b" data-col="q3"></td>
+                    <td><input type="text" data-row="row_5b" data-col="q4"></td>
+                    <td class="text-center target-col">75%</td><td class="text-center target-col">75%</td>
+                </tr>
+                <tr>
+                    <td>Percentage of HPN &amp; HSG complied reportorial requirements</td>
+                    <td class="text-center bg-slate-50 opacity-50">100%</td><td class="text-center bg-slate-50 opacity-50">100%</td>
+                    <td><input type="text" data-row="row_5c" data-col="q1"></td>
+                    <td><input type="text" data-row="row_5c" data-col="q2"></td>
+                    <td><input type="text" data-row="row_5c" data-col="q3"></td>
+                    <td><input type="text" data-row="row_5c" data-col="q4"></td>
+                    <td class="text-center target-col">100%</td><td class="text-center target-col">100%</td>
+                </tr>
+                <tr>
+                    <td class="perspective-cell">CAPABILITY</td>
+                    <td class="font-bold">6. Sustain Reliable S10 Equipment (S10)</td>
+                    <td>Equipment Readiness Rating</td>
+                    <td class="text-center bg-slate-50 opacity-50">90%</td><td class="text-center bg-slate-50 opacity-50">90%</td>
+                    <td><input type="text" data-row="row_6" data-col="q1"></td>
+                    <td><input type="text" data-row="row_6" data-col="q2"></td>
+                    <td><input type="text" data-row="row_6" data-col="q3"></td>
+                    <td><input type="text" data-row="row_6" data-col="q4"></td>
+                    <td class="text-center target-col">90%</td><td class="text-center target-col">90%</td>
+                    <td class="text-[9px]">6. Ensure implementation of Equipment and Facility Maintenance Program (S10)</td>
+                </tr>
+                <tr>
+                    <td rowspan="4" class="perspective-cell">ACCOMPLISHMENT</td>
+                    <td rowspan="4" class="font-bold">7. Effective and efficient delivery of Primary Unit Mandate (S10)</td>
+                    <td>% of implementation of APB output to PPBER</td>
+                    <td class="text-center bg-slate-50 opacity-50">100%</td><td class="text-center bg-slate-50 opacity-50">100%</td>
+                    <td><input type="text" data-row="row_7a" data-col="q1"></td>
+                    <td><input type="text" data-row="row_7a" data-col="q2"></td>
+                    <td><input type="text" data-row="row_7a" data-col="q3"></td>
+                    <td><input type="text" data-row="row_7a" data-col="q4"></td>
+                    <td class="text-center target-col">100%</td><td class="text-center target-col">100%</td>
+                    <td rowspan="4" class="text-[9px]">7. Execute Initiatives to Accomplish Unit Mission (S10)</td>
+                </tr>
+                <tr>
+                    <td>No. of Monthly reports created/submitted</td>
+                    <td class="text-center bg-slate-50 opacity-50">12</td><td class="text-center bg-slate-50 opacity-50">12</td>
+                    <td><input type="text" data-row="row_7b" data-col="q1"></td>
+                    <td><input type="text" data-row="row_7b" data-col="q2"></td>
+                    <td><input type="text" data-row="row_7b" data-col="q3"></td>
+                    <td><input type="text" data-row="row_7b" data-col="q4"></td>
+                    <td class="text-center target-col">12</td><td class="text-center target-col">12</td>
+                </tr>
+                <tr>
+                    <td>No. of Quarterly reports created/submitted</td>
+                    <td class="text-center bg-slate-50 opacity-50">4</td><td class="text-center bg-slate-50 opacity-50">4</td>
+                    <td><input type="text" data-row="row_7c" data-col="q1"></td>
+                    <td><input type="text" data-row="row_7c" data-col="q2"></td>
+                    <td><input type="text" data-row="row_7c" data-col="q3"></td>
+                    <td><input type="text" data-row="row_7c" data-col="q4"></td>
+                    <td class="text-center target-col">4</td><td class="text-center target-col">4</td>
+                </tr>
+                <tr>
+                    <td>No. of Annual reports created/submitted</td>
+                    <td class="text-center bg-slate-50 opacity-50">1</td><td class="text-center bg-slate-50 opacity-50">1</td>
+                    <td><input type="text" data-row="row_7d" data-col="q1"></td>
+                    <td><input type="text" data-row="row_7d" data-col="q2"></td>
+                    <td><input type="text" data-row="row_7d" data-col="q3"></td>
+                    <td><input type="text" data-row="row_7d" data-col="q4"></td>
+                    <td class="text-center target-col">1</td><td class="text-center target-col">1</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer-section bg-slate-50 p-8 grid grid-cols-3 gap-6 border-t border-slate-200">
+        <div class="sig-block">
+            <span class="text-[10px] text-[#ff4081] font-black uppercase tracking-widest mb-3 block">Prepared by</span>
+            <div class="sig-upload-box" onclick="document.getElementById('file-1').click()">
+                <span id="placeholder-1" class="sig-placeholder">Click to Sign</span>
+                <img id="img-1" class="hidden" style="max-height:100%;object-fit:contain;">
+                <input type="file" id="file-1" class="hidden" accept="image/*" onchange="handleUpload(this,1)">
+            </div>
+            <span class="name block mt-4 text-xs">LCDR AUDIE E BAZAR PN</span>
+            <span class="text-[9px] text-slate-400 block mt-1 uppercase">AC of S for Financial Management, S10</span>
+        </div>
+        <div class="sig-block">
+            <span class="text-[10px] text-[#ff4081] font-black uppercase tracking-widest mb-3 block">Verified by</span>
+            <div class="sig-upload-box" onclick="document.getElementById('file-2').click()">
+                <span id="placeholder-2" class="sig-placeholder">Click to Sign</span>
+                <img id="img-2" class="hidden" style="max-height:100%;object-fit:contain;">
+                <input type="file" id="file-2" class="hidden" accept="image/*" onchange="handleUpload(this,2)">
+            </div>
+            <span class="name block mt-4 text-xs">LCDR ABNER S ANCAYA PN</span>
+            <span class="text-[9px] text-slate-400 block mt-1 uppercase">HPN &amp; HSG Sail Plan Officer</span>
+        </div>
+        <div class="sig-block">
+            <span class="text-[10px] text-[#ff4081] font-black uppercase tracking-widest mb-3 block">Noted by</span>
+            <div class="sig-upload-box" onclick="document.getElementById('file-3').click()">
+                <span id="placeholder-3" class="sig-placeholder">Click to Sign</span>
+                <img id="img-3" class="hidden" style="max-height:100%;object-fit:contain;">
+                <input type="file" id="file-3" class="hidden" accept="image/*" onchange="handleUpload(this,3)">
+            </div>
+            <span class="name block mt-4 text-xs">CAPT OLIVER B REFORBA PN(MNSA)</span>
+            <span class="text-[9px] text-slate-400 block mt-1 uppercase">Commander, HPN &amp; HSG</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://pyciacmxcnktwhpvfdsh.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5Y2lhY214Y25rdHdocHZmZHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMDE4ODIsImV4cCI6MjA4OTg3Nzg4Mn0.B082A3lKWk6g0EH59M-A8sEl2KNyKfZOHYdkkuWmXnc';
+    const TABLE = 's10_scorecard';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function setStatus(state, msg) {
+        const el = document.getElementById('sync-status');
+        el.className = state;
+        document.getElementById('status-text').innerText = msg;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        setStatus('saving', 'Loading from Cloud...');
+        try {
+            const { data, error } = await sb.from(TABLE).select('*');
+            if (error) throw error;
+            data.forEach(row => {
+                ['q1','q2','q3','q4'].forEach(col => {
+                    const input = document.querySelector(`input[data-row="${row.row_id}"][data-col="${col}"]`);
+                    if (input && row[col] !== null) input.value = row[col];
+                });
+            });
+            setStatus('synced', 'Cloud Sync Active');
+        } catch(e) {
+            console.error(e);
+            setStatus('error', 'Connection Failed');
+        }
+    });
+
+    document.querySelectorAll('input[type="text"]').forEach(input => {
+        input.addEventListener('change', async (e) => {
+            const row_id = e.target.getAttribute('data-row');
+            const col    = e.target.getAttribute('data-col');
+            const value  = e.target.value;
+            setStatus('saving', 'Saving...');
+            try {
+                const { error } = await sb.from(TABLE).upsert(
+                    { row_id, [col]: value, updated_at: new Date().toISOString() },
+                    { onConflict: 'row_id' }
+                );
+                if (error) throw error;
+                setTimeout(() => setStatus('synced', 'Cloud Sync Active'), 600);
+            } catch(e) {
+                console.error(e);
+                setStatus('error', 'Sync Failed!');
+            }
+        });
+    });
+
+    function handleUpload(input, index) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = document.getElementById('img-' + index);
+            img.src = e.target.result; img.classList.remove('hidden');
+            document.getElementById('placeholder-' + index).classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function downloadPDF() {
+        html2pdf().from(document.getElementById('scorecard-area')).set({
+            margin: 0, filename: 'S10_Financial_Management_Scorecard_2026.pdf',
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'legal', orientation: 'landscape' }
+        }).save();
+    }
+</script>
+</body>
+</html>
