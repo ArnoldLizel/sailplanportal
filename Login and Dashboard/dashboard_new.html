@@ -10,18 +10,8 @@
 /* Navigation — loaded in head so links work before anything else */
 (function(){
   (function(){
-  function appBase(){
-    var p=location.pathname.replace(/\\/g,'/');
-    /* dashboard_new.html lives in SP_One_Piece/Login and Dashboard/
-       images/, BSC/, IBSC/, MTP/, POI/ all live one level up in SP_One_Piece/
-       so when we're inside that folder, prefix every relative path with ../ */
-    if(p.indexOf('/Login and Dashboard/')!==-1 || p.indexOf('/Login%20and%20Dashboard/')!==-1) return '../';
-    if(p.indexOf('/SP_One_Piece/')!==-1) return '';
-    if(p.indexOf('/Desktop/')!==-1) return 'HTML/SP_One_Piece/';
-    return '';
-  }
-  function resolvePath(path){ return appBase()+path; }
-  window.resolveAppPath=resolvePath;
+  function resolvePath(path){ return '../' + path; }
+  window.resolveAppPath = resolvePath;
   window.openPage=function(path,label){
     var hs=document.getElementById('home-screen');
     var crew=document.getElementById('crew-bar-wrap');
