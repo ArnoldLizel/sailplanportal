@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/Login and Dashboard/index.html",
+      "permanent": false
+    }
+  ]
+}
